@@ -4,6 +4,11 @@ project(rsx)
 
 option(ENABLE_SAMPLE "enable to build sample app" ON)
 
+option(HR_SERIAL_AUTO_READ_ECHO_DATA "" ON)
+if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
+    add_definitions(-DHR_SERIAL_AUTO_READ_ECHO_DATA)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
 
 file(GLOB SRCS "src/*.c")

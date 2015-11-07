@@ -15,6 +15,7 @@ static errno_t setraw(struct termios *term) {
   term->c_oflag &= ~OPOST;
   term->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
   term->c_cflag &= ~(CSIZE | PARENB);
+  //term->c_cflag |= CS8 | CRTSCTS;
   term->c_cflag |= CS8;
 
   return EOK;
@@ -109,8 +110,26 @@ errno_t hr_serial_close (hr_serial *ser) {
   return EOK;
 }
 
-errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
+errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   EVALUE(NULL, ser);
+
+  size_t read_size;
+  ECALL(_read(ser->fd, data, size, &read_size));
+  printf("=== %zd %zd\n", size, read_size);
+
+  if (size != read_size) {
+    printf("error %s %zd / %zd\n", __FUNCTION__, read_size, size);
+    for (size_t i = 0; i < read_size; i++) {
+      printf(" %02x", ((uint8_t*)data)[i]);
+    }
+    printf("\n");
+    return -1;
+  }
+
+  return EOK;
+}
+
+errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
 
   size_t send_size;
   ECALL(_write(ser->fd, data, size, &send_size));
@@ -120,23 +139,11 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
     return -1;
   }
 
-  return EOK;
-}
-
-errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
-  EVALUE(NULL, ser);
-
+#if defined(HR_SERIAL_AUTO_READ_ECHO_DATA)
+  usleep(5 * 1000);
   size_t read_size;
   ECALL(_read(ser->fd, data, size, &read_size));
-
-  if (size != read_size) {
-    printf("error %s %zd / %zd\n", __FUNCTION__, size, read_size);
-    for (size_t i = 0; i < read_size; i++) {
-      printf(" %02x", ((uint8_t*)data)[i]);
-    }
-    printf("\n");
-    return -1;
-  }
+#endif
 
   return EOK;
 }
