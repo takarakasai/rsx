@@ -74,9 +74,11 @@ errno_t rsx_pkt_deser (rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num, s
   ELTGT(0, max_num, pkt_size);
 
    // TODO: sub-serializer
-  for (size_t i = 0; i < pkt->count; i++) {
-    for (size_t j = 0; j < pkt->length; j++) {
-      pkt->data[(i * pkt->length) + j] = src[idx++];
+  if (pkt->flag == 0x00 || pkt->flag == 0x04) {
+    for (size_t i = 0; i < pkt->count; i++) {
+      for (size_t j = 0; j < pkt->length; j++) {
+        pkt->data[(i * pkt->length) + j] = src[idx++];
+      }
     }
   }
 
@@ -86,7 +88,7 @@ errno_t rsx_pkt_deser (rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num, s
   }
 
   //src[idx] = pkt->check_sum;
-  printf("recv pkt check sum: %02x vx %02x\n", pkt->check_sum, src[idx]);
+  //printf("recv pkt check sum: %02x vx %02x\n", pkt->check_sum, src[idx]);
   idx++;
   *size = idx;
 

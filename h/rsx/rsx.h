@@ -79,6 +79,7 @@
 //#define RSX_LPKT_SETID(pkt, id)         do{pkt.id      = id     ;}while(0)
 #define RSX_LPKT_SETID(pkt, count, id)  do{pkt.data[count * pkt.length] = id;}while(0)
 #define RSX_LPKT_SETFLAG(pkt, val)      do{pkt.flag    = val    ;}while(0)
+#define RSX_LPKT_GETFLAG(pkt)           ((pkt).flag)
 #define RSX_LPKT_SETADDR(pkt, val)      do{pkt.address = val    ;}while(0)
 #define RSX_LPKT_SETLENGTH(pkt, val)    do{pkt.length  = val + sizeof(uint8_t);}while(0) // TODO:
 #define RSX_LPKT_SETCOUNT(pkt, val)     do{pkt.count   = val  ;}while(0)
@@ -93,7 +94,9 @@
     } while(0)
 
 #define RSX_SPKT_SETID(pkt, val)        do{(pkt).id      = val;}while(0)
+#define RSX_SPKT_GETID(pkt)             ((pkt).id)
 #define RSX_SPKT_SETFLAG(pkt, val)      do{(pkt).flag    = val;}while(0)
+#define RSX_SPKT_GETFLAG(pkt)           ((pkt).flag)
 #define RSX_SPKT_SETADDR(pkt, val)      do{(pkt).address = val;}while(0)
 #define RSX_SPKT_SETLENGTH(pkt, val)    do{(pkt).length  = val;}while(0)
 #define RSX_SPKT_GETLENGTH(pkt)         RSX_PKT_GETLENGTH(pkt)

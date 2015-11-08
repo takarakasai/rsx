@@ -8,6 +8,9 @@
 /* for memset */
 #include <string.h>
 
+/* for usleep */
+#include <unistd.h>
+
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);
 
@@ -115,14 +118,16 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
 
   size_t read_size;
   ECALL(_read(ser->fd, data, size, &read_size));
-  printf("=== %zd %zd\n", size, read_size);
 
-  if (size != read_size) {
-    printf("error %s %zd / %zd\n", __FUNCTION__, read_size, size);
+#if DEBUG
     for (size_t i = 0; i < read_size; i++) {
       printf(" %02x", ((uint8_t*)data)[i]);
     }
     printf("\n");
+#endif
+
+  if (size != read_size) {
+    printf("error %s %zd / %zd\n", __FUNCTION__, read_size, size);
     return -1;
   }
 
