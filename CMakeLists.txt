@@ -9,11 +9,17 @@ if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
     add_definitions(-DHR_SERIAL_AUTO_READ_ECHO_DATA)
 endif()
 
+option(HR_SERIAL_LATENCY_CHECK "" OFF)
+if(${HR_SERIAL_LATENCY_CHECK})
+    add_definitions(-DHR_SERIAL_LATENCY_CHECK)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
 
 file(GLOB SRCS "src/*.c")
 file(GLOB SERIAL_SRCS "src/serial/*.c")
-list(APPEND SRCS ${SERIAL_SRCS})
+file(GLOB TIME_SRCS "src/time/*.c")
+list(APPEND SRCS ${SERIAL_SRCS} ${TIME_SRCS})
 
 if(${CMAKE_COMPILER_IS_GNUCC})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2 -std=gnu99 -D_GNU_SOURCE")

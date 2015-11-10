@@ -8,6 +8,10 @@
 #include "rsx.h"
 #include "rsx_io.h"
 
+#if defined(HR_SERIAL_LATENCY_CHECK)
+#include "time/hr_unixtime.h"
+#endif
+
 #include <stdbool.h>
 
 errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t size, bool use_serial) {
@@ -33,7 +37,7 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
       ECALL(rsx_pkt_ser(rpkt, buff, size, &pkt_size));
       //ECALL(data_dump(buff, pkt_size));
       if (use_serial) ECALL(hr_serial_write(hrs, buff, pkt_size));
-      usleep(15 * 1000);
+      //usleep(15 * 1000);
       //if (use_serial) ECALL(hr_serial_read(hrs, buff, pkt_size + 12)); // TODO: size + 12
       if (use_serial) {
         errno_t eno = hr_serial_read(hrs, buff, pkt_size + 2);
@@ -47,9 +51,9 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
           ECALL(rsx_pkt_deser(rpkt, buff, size, &pkt_size));
 
           ang[i] = (int16_t)((((uint16_t)RSX_SPKT_GET_U8(*rpkt, 1)) << 8) | RSX_SPKT_GET_U8(*rpkt, 0)) / 10.0f;
-          printf("%02zd[%02d] : %+8.3f FLAG:%04x : ", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt));
-          ECALL(data_dump(buff, pkt_size + 2));
-          printf("\n");
+          //printf("%02zd[%02d] : %+8.3f FLAG:%04x : ", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt));
+//          ECALL(data_dump(buff, pkt_size + 2));
+          //printf("\n");
           break;
         } else {
           //ang[i] = -0.0;
@@ -61,7 +65,7 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
           continue;
         }
       }
-      usleep(15 * 1000);
+      //usleep(15 * 1000);
     }
   }
 
@@ -75,7 +79,8 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
   //for (size_t i = 0; i < num_of_axis; i++) {
   //  printf("%+8.3f\n", ang[i]);
   //}
-  printf("\033[%zdA", num_of_axis);
+  //printf("\033[%zdA", num_of_axis);
+//  printf("\n");
 
   return EOK;
 }
@@ -98,7 +103,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
   ECALL(data_dump(buff, size));
   if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
-  usleep(10 * 1000);
+  //usleep(10 * 1000);
   if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 4)); // TODO: size + 2
   ECALL(data_dump(buff, size + 4));                           // TODO: size + 2
   ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
@@ -106,7 +111,8 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   printf("Model Number L:%02x H:%02x\n", RSX_SPKT_GET_U8(rpkt, 0), RSX_SPKT_GET_U8(rpkt, 1));
   printf("Firmware Version:%02x\n", RSX_SPKT_GET_U8(rpkt, 2));
 
-  //ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+  ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+  //return 0;
 
 #if defined(TEST_SPKT)
   RSX_SPKT_DECL(spkt, 2);
@@ -124,7 +130,12 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
   do {
     ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
-    usleep(5 * 1000);
+    //usleep(5 * 1000);
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  hr_time tm_bef, tm_aft, tm_diff;
+  ECALL(hr_get_time(&tm_bef));
+#endif
 
     RSX_SPKT_SETID(spkt, 0x01);
     RSX_SPKT_SETADDR(spkt, 0x1e);
@@ -135,25 +146,47 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
     ECALL(rsx_pkt_ser(&spkt, buff, sizeof(buff), &size));
     ECALL(data_dump(buff, size));
-    //if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-    usleep(50 * 1000);
-
+    //usleep(50 * 1000);
     ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
-    usleep(5 * 1000);
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  ECALL(hr_get_time(&tm_aft));
+  ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
+
+  printf("           read latency : ");
+  ECALL(hr_dump_time(&tm_diff));
+#endif
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  ECALL(hr_get_time(&tm_bef));
+#endif
+
+    //usleep(5 * 1000);
 
     // 0xFC7C --> -90[deg]
     RSX_SPKT_SET_INT16(spkt, 0, -900);
 
     ECALL(rsx_pkt_ser(&spkt, buff, sizeof(buff), &size));
     ECALL(data_dump(buff, size));
-    //if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-    usleep(50 * 1000);
+    ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  ECALL(hr_get_time(&tm_aft));
+  ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
+
+  printf("           read latency : ");
+  ECALL(hr_dump_time(&tm_diff));
+#endif
+
+    //usleep(50 * 1000);
   } while(count++ < 5);
 #else
-  const size_t num_of_servo = 32;
-  RSX_LPKT_DECL(pkt, num_of_servo, 2);
+  const size_t num_of_servo = 20;
+  RSX_LPKT_DECL(pkt, num_of_servo, 10);
   RSX_LPKT_INIT(pkt);
   RSX_LPKT_SETADDR(pkt, 0x24);
   RSX_LPKT_SETLENGTH(pkt, 0x01);
@@ -168,19 +201,50 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
   usleep(500 * 1000);
+  //usleep(100 * 1000 * 1000);
 
-  float pose[2][20] = {
-    /*  1     2  |   3     4     5  |   6     7     8  |   9     10    11     12     13    14  |  15     16    17     18     19    20*/
-    { 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f,  0.0f, 0.0f,  0.0f,  0.0f, 0.0f,  0.0f,  0.0f, 0.0f,  0.0f,  0.0f, 0.0f},
-    { 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 20.0f, 0.0f,-40.0f,-20.0f, 0.0f,  0.0f,-20.0f, 0.0f, 40.0f, 20.0f, 0.0f},
+  ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+
+  int pose[21][20] = {
+    /*        1     2  |   3     4     5  |   6     7     8  |   9     10    11     12     13    14  |  15     16    17     18     19    20*/
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
+    /* 1*/{30, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
+    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
+    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 3, 0,  0,- 3, 0,  6,  3, 0},
+    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,- 6, 0,  0,- 6, 0, 12,  6, 0},
+    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
+    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
+    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
+    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
+    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
+    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
+    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
+    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
+    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
+    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
+    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,- 6, 0,  0,- 6, 0, 12,  6, 0},
+    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 3, 0,  0,- 3, 0,  6,  3, 0},
+    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
   };
 
-  do {
+  for (size_t idx = 0; idx < 20; idx++) {
+#if defined(HR_SERIAL_LATENCY_CHECK)
+    hr_time tm_bef, tm_aft, tm_diff;
+    ECALL(hr_get_time(&tm_bef));
+#endif
+
     RSX_LPKT_SETADDR(pkt, 0x1e);
     RSX_LPKT_SETLENGTH(pkt, 0x02);
+    //for (size_t i = 0; i < 20; i++) {
     for (size_t i = 0; i < 20; i++) {
       RSX_LPKT_SETID(pkt, i, i + 1);
-      RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[0][i] * 10));
+      RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[idx][i] * 10));
+      //RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[0][i] * 10));
+      //RSX_LPKT_SETID(pkt, 0, 20);
+      //RSX_LPKT_SET_INT16(pkt, i, 0, (int)(0 * 10));
     }
 
     // 0x0384 --> 90[deg]
@@ -191,38 +255,28 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(data_dump(buff, size));
     if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-    usleep(200 * 1000);
+    //usleep(200 * 1000);
 
-    usleep(15 * 1000);
+    //usleep(15 * 1000);
     //for (size_t i = 0; i < 5; i++) {
       ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
       //usleep(100 * 1000);
     //}
+ 
+#if defined(HR_SERIAL_LATENCY_CHECK)
+    ECALL(hr_get_time(&tm_aft));
+    ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
 
-    for (size_t i = 0; i < 20; i++) {
-      // 0xFC7C --> -90[deg]
-      //RSX_LPKT_SET_INT16(pkt, 0, 0, -900);
-      RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[1][i] * 10));
-    }
-
-    ECALL(rsx_pkt_ser(&pkt, buff, sizeof(buff), &size));
-    ECALL(data_dump(buff, size));
-    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
-
-    usleep(200 * 1000);
-
-    usleep(15 * 1000);
-    //for (size_t i = 0; i < 5; i++) {
-      ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
-      //usleep(100 * 1000);
-    //}
-    //
-    usleep(500 * 1000);
-
-  } while(count++ < 1);
+    printf("     write read latency : ");
+    ECALL(hr_dump_time(&tm_diff));
 #endif
 
-  printf("\033[20B");
+    usleep(1000 * 1000);
+
+  }
+#endif
+
+  //printf("\033[20B");
 
   usleep(10 * 1000);
 

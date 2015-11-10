@@ -1,6 +1,8 @@
 
 #include "serial/hr_serial.h"
+
 #include "rsx_err.h"
+#include "time/hr_unixtime.h"
 
 /* for error print */
 #include <stdio.h>
@@ -11,13 +13,17 @@
 /* for usleep */
 #include <unistd.h>
 
+static const size_t timeout_usec = 50 * 1000;
+static const size_t wait_usec    = 10;
+
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);
 
   term->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
   term->c_oflag &= ~OPOST;
   term->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-  term->c_cflag &= ~(CSIZE | PARENB);
+  //term->c_cflag &= ~(CSIZE | PARENB);
+  term->c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
   //term->c_cflag |= CS8 | CRTSCTS;
   term->c_cflag |= CS8;
 
@@ -113,28 +119,71 @@ errno_t hr_serial_close (hr_serial *ser) {
   return EOK;
 }
 
-errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
+static errno_t serial_read (hr_serial *ser, void* data, size_t size) {
   EVALUE(NULL, ser);
+  EVALUE(NULL, data);
 
-  size_t read_size;
-  ECALL(_read(ser->fd, data, size, &read_size));
+  errno_t eno = -1; // TODO:
+
+  const size_t max_count = (timeout_usec + wait_usec - 1) / wait_usec;
+  size_t rcv_cnt = 0;
+  size_t cnt;
+  for (cnt = 0; cnt < max_count; cnt++) {
+    usleep(wait_usec);
+
+    size_t read_size;
+    uint8_t rdata[size];
+    ECALL(_read(ser->fd, rdata, size, &read_size));
+
+    // overflow TODO:
+    for (size_t i = 0; i < read_size; i++) {
+      ((uint8_t*)data)[rcv_cnt + i] = rdata[i];
+    }
+    rcv_cnt += read_size;
+
+    if (size == rcv_cnt) {
+      eno = EOK;
+      break;
+    }
+  }
+
+  //printf("           read latency : %zd / %zd %s\n",
+  //        cnt * wait_usec, max_count * wait_usec, size == rcv_cnt ? "OK" : "NG");
 
 #if DEBUG
-    for (size_t i = 0; i < read_size; i++) {
-      printf(" %02x", ((uint8_t*)data)[i]);
-    }
-    printf("\n");
+  printf("           size[%03zd] :", rcv_cnt);
+  for (size_t i = 0; i < rcv_cnt; i++) {
+    printf(" %02x", ((uint8_t*)data)[i]);
+  }
+  printf("\n");
 #endif
 
-  if (size != read_size) {
-    printf("error %s %zd / %zd\n", __FUNCTION__, read_size, size);
-    return -1;
-  }
+  return eno;
+}
+
+errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  hr_time tm_bef, tm_aft, tm_diff;
+  ECALL(hr_get_time(&tm_bef));
+#endif
+
+  ECALL(serial_read(ser, data, size));
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  ECALL(hr_get_time(&tm_aft));
+  ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
+
+  printf("           read latency : ");
+  ECALL(hr_dump_time(&tm_diff));
+#endif
 
   return EOK;
 }
 
 errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
+  EVALUE(NULL, ser);
+  EVALUE(NULL, data);
 
   size_t send_size;
   ECALL(_write(ser->fd, data, size, &send_size));
@@ -145,9 +194,35 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
   }
 
 #if defined(HR_SERIAL_AUTO_READ_ECHO_DATA)
-  usleep(5 * 1000);
-  size_t read_size;
-  ECALL(_read(ser->fd, data, size, &read_size));
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  hr_time tm_bef, tm_aft, tm_diff;
+  ECALL(hr_get_time(&tm_bef));
+#endif
+
+  const size_t max_count = (timeout_usec + wait_usec - 1) / wait_usec;
+  size_t cnt;
+  for (cnt = 0; cnt < max_count; cnt++) {
+    usleep(wait_usec);
+    size_t recv_size;
+    uint8_t rdata[send_size];
+    ECALL(_read(ser->fd, rdata, send_size, &recv_size));
+
+    if (recv_size != read_size) {
+      continue;
+    }
+
+    if (strcmp(rdata, data, recv_size) == 0) {
+      break;
+    }
+  }
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  printf(" auto echo read latency : %zd / %zd\n", cnt * wait_usec, max_count * wait_usec);
+  ECALL(hr_get_time(&tm_aft));
+  ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
+
+  printf(" auto echo read latency : ");
+  ECALL(hr_dump_time(&tm_diff));
+#endif
 #endif
 
   return EOK;
