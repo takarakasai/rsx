@@ -102,7 +102,8 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
 
   tcgetattr(ser->fd, &(ser->prev_term)); /* 現在のポート設定を待避 */
   ECALL(setraw(&(ser->term)));
-  ECALL(setspeed(&(ser->term), B115200));
+  //ECALL(setspeed(&(ser->term), B115200));
+  ECALL(setspeed(&(ser->term), B460800));
   ECALL(setattr(ser->fd, &(ser->term)));
 
   return EOK;
