@@ -10,16 +10,29 @@ endif()
 
 set(APP_NAME rsx_app)
 
-add_executable  (${APP_NAME} ${SRCS})
-
 set(DEPENDENCIES "rsx")
 
-add_dependencies(${APP_NAME} ${DEPENDENCIES})
-target_link_libraries(${APP_NAME} ${DEPENDENCIES})
+foreach(SRC ${SRCS})
+  message(STATUS ${SRC})
+  string(REGEX REPLACE "(.+/)([^/]+)\\.c$" "\\2" STR ${SRC})
+  message(STATUS ": " ${STR})
+
+  add_executable(${STR} ${SRC})
+
+  list(APPEND DEPENDENCIES pthread rt)
+
+  message(STATUS ": " ${STR} " with " ${DEPENDENCIES})
+
+  add_dependencies(${STR} ${DEPENDENCIES})
+  target_link_libraries(${STR} ${DEPENDENCIES})
+
+  list(APPEND EXECUTABLES ${STR})
+
+endforeach()
 
 if(${UNIX})
-    install(TARGETS ${APP_NAME} RUNTIME DESTINATION bin)
+    install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
 elseif(${MINGW})
-    install(TARGETS ${APP_NAME} RUNTIME DESTINATION ${INSTALL_DIR})
+    install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION ${INSTALL_DIR})
 endif()
 
