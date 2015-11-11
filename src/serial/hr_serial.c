@@ -211,7 +211,7 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
       continue;
     }
 
-    if (strcmp((void*)rdata, data) == 0) {
+    if (memcmp(rdata, data, recv_size) == 0) {
       break;
     }
   }
