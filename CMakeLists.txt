@@ -14,6 +14,11 @@ if(${HR_SERIAL_LATENCY_CHECK})
     add_definitions(-DHR_SERIAL_LATENCY_CHECK)
 endif()
 
+option(HR_SERIAL_LATENCY_CHECK_DETAIL "" OFF)
+if(${HR_SERIAL_LATENCY_CHECK_DETAIL})
+    add_definitions(-DHR_SERIAL_LATENCY_CHECK_DETAIL)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
 
 file(GLOB SRCS "src/*.c")

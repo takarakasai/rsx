@@ -163,14 +163,14 @@ static errno_t serial_read (hr_serial *ser, void* data, size_t size) {
 
 errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
+#if defined(HR_SERIAL_LATENCY_CHECK_DETAIL)
   hr_time tm_bef, tm_aft, tm_diff;
   ECALL(hr_get_time(&tm_bef));
 #endif
 
   ECALL(serial_read(ser, data, size));
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
+#if defined(HR_SERIAL_LATENCY_CHECK_DETAIL)
   ECALL(hr_get_time(&tm_aft));
   ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
 
@@ -194,7 +194,7 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
   }
 
 #if defined(HR_SERIAL_AUTO_READ_ECHO_DATA)
-#if defined(HR_SERIAL_LATENCY_CHECK)
+#if defined(HR_SERIAL_LATENCY_CHECK_DETAIL)
   hr_time tm_bef, tm_aft, tm_diff;
   ECALL(hr_get_time(&tm_bef));
 #endif
@@ -215,8 +215,8 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
       break;
     }
   }
-#if defined(HR_SERIAL_LATENCY_CHECK)
-  printf(" auto echo read latency : %zd / %zd\n", cnt * wait_usec, max_count * wait_usec);
+#if defined(HR_SERIAL_LATENCY_CHECK_DETAIL)
+  //printf(" auto echo read latency : %zd / %zd\n", cnt * wait_usec, max_count * wait_usec);
   ECALL(hr_get_time(&tm_aft));
   ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
 
