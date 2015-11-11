@@ -21,7 +21,9 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
 
   ECALL(rsx_lpkt_init(rpkt));
   const size_t num_of_axis = 20;
+#if PRINT_ANG
   float ang[num_of_axis];
+#endif
   for (size_t i = 0; i < num_of_axis; i++) {
     size_t retry = 1;
     for (size_t j = 0; j < retry; j++) {
@@ -50,16 +52,21 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
         if (eno == EOK) {
           ECALL(rsx_pkt_deser(rpkt, buff, size, &pkt_size));
 
+
+#if PRINT_ANG
           ang[i] = (int16_t)((((uint16_t)RSX_SPKT_GET_U8(*rpkt, 1)) << 8) | RSX_SPKT_GET_U8(*rpkt, 0)) / 10.0f;
-          //printf("%02zd[%02d] : %+8.3f FLAG:%04x : ", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt));
+          printf("%02zd[%02d] : %+8.3f FLAG:%04x : ", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt));
 //          ECALL(data_dump(buff, pkt_size + 2));
-          //printf("\n");
+          printf("\n");
+#endif
           break;
         } else {
           //ang[i] = -0.0;
           //printf("%02zd :    error\n", i + 1);
           if (j == retry - 1) {
+#if PRINT_ANG
             ang[i] = -0.0;
+#endif
             printf("%02zd[%02d] :    error\n", i + 1, RSX_SPKT_GETID(*rpkt));
           }
           continue;
@@ -88,7 +95,7 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
 int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   EVALUE(NULL, hrs);
 
-  size_t count = 0;
+  //size_t count = 0;
   uint8_t buff[1024];
   size_t size;
 
