@@ -207,11 +207,11 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
     uint8_t rdata[send_size];
     ECALL(_read(ser->fd, rdata, send_size, &recv_size));
 
-    if (recv_size != read_size) {
+    if (recv_size != send_size) {
       continue;
     }
 
-    if (strcmp(rdata, data, recv_size) == 0) {
+    if (strcmp((void*)rdata, data) == 0) {
       break;
     }
   }
