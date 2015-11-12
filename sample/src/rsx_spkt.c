@@ -175,8 +175,6 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   printf("----- end ----- \n");
   usleep(10 * 1000);
 
-  if (use_serial) ECALL(hr_serial_close(hrs));
-
   return 0;
 }
 

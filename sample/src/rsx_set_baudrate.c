@@ -103,6 +103,8 @@ int run_test(int argc, char *argv[], hr_serial *hrs,
   ECALL(data_dump(buff, size));
   if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
+  ///////////// save rom ////////////////////////////////
+
   RSX_SPKT_INIT(spkt);
   RSX_SPKT_SETID(spkt, servo_id);
   RSX_SPKT_SETFLAG(spkt, 0x40);
@@ -112,6 +114,8 @@ int run_test(int argc, char *argv[], hr_serial *hrs,
   ECALL(rsx_pkt_ser(&spkt, buff, sizeof(buff), &size));
   ECALL(data_dump(buff, size));
   if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+
+  sleep(1);
 
   ///////////// read rom ////////////////////////////////
 
@@ -137,8 +141,6 @@ int run_test(int argc, char *argv[], hr_serial *hrs,
       printf("[id:%02d] : error\n", RSX_SPKT_GETID(spkt));
     }
   }
-
-  if (use_serial) ECALL(hr_serial_close(hrs));
 
   return 0;
 }

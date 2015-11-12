@@ -113,9 +113,8 @@ errno_t hr_serial_close (hr_serial *ser) {
   EVALUE(NULL, ser);
 
   ECALL(setattr(ser->fd, &(ser->prev_term)));
-  ser->fd = 0;
-
   ECALL(_close(ser->fd));
+  ser->fd = 0;
 
   return EOK;
 }
