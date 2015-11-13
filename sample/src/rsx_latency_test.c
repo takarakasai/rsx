@@ -29,16 +29,19 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
     for (size_t j = 0; j < retry; j++) {
       ECALL(rsx_lpkt_init(rpkt));
       RSX_SPKT_SETID(*rpkt, 1 + i);
-      RSX_SPKT_SETFLAG(*rpkt, 0xF);
+      RSX_SPKT_SETFLAG(*rpkt, 0xF); // 指定アドレス
+      //RSX_SPKT_SETFLAG(*rpkt, 0x9); // No.42 - 59 : 18[byte]
       RSX_SPKT_SETADDR(*rpkt, 0x2A);
-      RSX_SPKT_SETLENGTH(*rpkt, 2);
+      RSX_SPKT_SETLENGTH(*rpkt, 6);
+      //RSX_SPKT_SETLENGTH(*rpkt, 0);
 
       size_t pkt_size;
       ECALL(rsx_pkt_ser(rpkt, buff, size, &pkt_size));
       //ECALL(data_dump(buff, pkt_size));
       if (use_serial) ECALL(hr_serial_write(hrs, buff, pkt_size));
       if (use_serial) {
-        errno_t eno = hr_serial_read(hrs, buff, pkt_size + 2);
+        errno_t eno = hr_serial_read(hrs, buff, pkt_size + 6);
+        //errno_t eno = hr_serial_read(hrs, buff, pkt_size + 18);
         //ECALL(data_dump(buff, pkt_size + 12));                           // TODO: size + 12
         if (eno == EOK) {
           ECALL(rsx_pkt_deser(rpkt, buff, size, &pkt_size));
@@ -118,10 +121,10 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
   ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
-  int pose[21][20] = {
+#if 0
+  int pose[20][20] = {
     /*        1     2  |   3     4     5  |   6     7     8  |   9     10    11     12     13    14  |  15     16    17     18     19    20*/
     /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
-    /* 1*/{30, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
     /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
     /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 3, 0,  0,- 3, 0,  6,  3, 0},
     /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,- 6, 0,  0,- 6, 0, 12,  6, 0},
@@ -142,6 +145,37 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
     /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
   };
+#endif
+#if 0
+  int pose[20][20] = {
+    /*      1  2 | 3  4  5 | 6  7  8 | 9  10 11   12  13 14 |15  16 17  18  19 20*/
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   4,  0, 0,  0,  0, 0,  4,  0, 0},
+    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  2, 0,-  4,- 2, 0,  0,- 2, 0,  4,  2, 0},
+    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 11,- 6, 0,  0,- 6, 0, 11,  6, 0},
+    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 12, 0,- 22,-12, 0,  0,-12, 0, 22, 12, 0},
+    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 20, 0,- 36,-20, 0,  0,-20, 0, 36, 20, 0},
+    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 30, 0,- 54,-30, 0,  0,-30, 0, 54, 30, 0},
+    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 38, 0,- 68,-38, 0,  0,-38, 0, 68, 38, 0},
+    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 44, 0,- 78,-44, 0,  0,-44, 0, 78, 44, 0},
+    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 48, 0,- 86,-48, 0,  0,-48, 0, 86, 48, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 50, 0,- 90,-50, 0,  0,-50, 0, 90, 50, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 50, 0,- 90,-50, 0,  0,-50, 0, 90, 50, 0},
+    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 48, 0,- 86,-48, 0,  0,-48, 0, 86, 48, 0},
+    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 44, 0,- 78,-44, 0,  0,-44, 0, 78, 44, 0},
+    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 38, 0,- 68,-38, 0,  0,-38, 0, 68, 38, 0},
+    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 30, 0,- 54,-30, 0,  0,-30, 0, 54, 30, 0},
+    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 20, 0,- 36,-20, 0,  0,-20, 0, 36, 20, 0},
+    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 12, 0,- 22,-12, 0,  0,-12, 0, 22, 12, 0},
+    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 11,- 6, 0,  0,- 6, 0, 11,  6, 0},
+    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  2, 0,-  4,- 2, 0,  0,- 2, 0,  4,  2, 0},
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   4,  0, 0,  0,  0, 0,  4,  0, 0},
+  };
+#endif
+  int pose[2][20] = {
+    /*      1  2 | 3  4  5 | 6  7  8 | 9  10 11   12  13 14 |15  16 17  18  19 20*/
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   4,  0, 0,  0,  0, 0,  4,  0, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 50, 0,- 90,-50, 0,  0,-50, 0, 90, 50, 0},
+  };
 
   for (size_t idx = 0; idx < 20; idx++) {
 #if defined(HR_SERIAL_LATENCY_CHECK)
@@ -149,6 +183,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(hr_get_time(&tm_bef));
 #endif
 
+#ifdef ENABLE_SERVO_DRIVE
     RSX_LPKT_SETADDR(pkt, 0x1e);
     RSX_LPKT_SETLENGTH(pkt, 0x02);
     for (size_t i = 0; i < 20; i++) {
@@ -159,6 +194,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(rsx_pkt_ser(&pkt, buff, sizeof(buff), &size));
     ECALL(data_dump(buff, size));
     if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+#endif
 
     ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
  
@@ -170,7 +206,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(hr_dump_time(&tm_diff));
 #endif
 
-    usleep(1000 * 1000);
+    usleep(200 * 1000);
 
   }
 
@@ -200,7 +236,23 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   return 0;
 }
 
+#include <sched.h>
+
 int main(int argc, char *argv[]) {
+#ifdef ENABLE_SHED
+  int eno;
+  struct sched_param sp;
+  //int policy = SCHED_FIFO;
+  int policy = SCHED_RR;
+  //eno = sched_getparam(0, &sp);
+  //printf("--> %d\n", eno);
+  int priority_max = sched_get_priority_max(policy);
+  printf("--> %d\n", priority_max);
+  sp.sched_priority = priority_max; // MAX
+  eno = sched_setscheduler(0, policy, &sp);
+  printf("--> %d\n", eno);
+#endif
+
   hr_serial hrs;
   ECALL(hr_serial_init(&hrs));
 
