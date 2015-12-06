@@ -13,7 +13,7 @@
 /* for usleep */
 #include <unistd.h>
 
-static const size_t timeout_usec = 50 * 1000;
+static const size_t timeout_usec = 200;
 static const size_t wait_usec    = 10;
 
 static errno_t setraw(struct termios *term) {

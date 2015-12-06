@@ -5,7 +5,7 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx.h"
+#include "rsx_pkt.h"
 #include "rsx_io.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
@@ -19,13 +19,13 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
   EVALUE(NULL, rpkt);
   EVALUE(NULL, buff);
 
-  ECALL(rsx_lpkt_init(rpkt));
+  ECALL(rsx_pkt_reset(rpkt));
   const size_t num_of_axis = 20;
   float ang[num_of_axis];
   for (size_t i = 0; i < num_of_axis; i++) {
-    size_t retry = 1;
+    size_t retry = 5;
     for (size_t j = 0; j < retry; j++) {
-      ECALL(rsx_lpkt_init(rpkt));
+      ECALL(rsx_pkt_reset(rpkt));
       //RSX_SPKT_SETID(*rpkt, 0x01);
       //RSX_SPKT_SETID(*rpkt, 12);
       RSX_SPKT_SETID(*rpkt, 1 + i);
@@ -45,7 +45,7 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
 
 
           ang[i] = (int16_t)((((uint16_t)RSX_SPKT_GET_U8(*rpkt, 1)) << 8) | RSX_SPKT_GET_U8(*rpkt, 0)) / 10.0f;
-          printf("%02zd[%02d] : %+8.3f FLAG:%04x : ", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt));
+          printf("%02zd[%02d] : %+8.3f FLAG:%04x try:%zd", i + 1, RSX_SPKT_GETID(*rpkt), ang[i], RSX_SPKT_GETFLAG(*rpkt), j);
           printf("\n");
           break;
         } else {
@@ -77,30 +77,34 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   RSX_SPKT_DECL(rpkt, 32);
   RSX_SPKT_INIT(rpkt);
 
-  RSX_SPKT_SETID(rpkt, 1);
-  RSX_SPKT_SETFLAG(rpkt, 0xF);
-  RSX_SPKT_SETADDR(rpkt, 0x00);
-  RSX_SPKT_SETLENGTH(rpkt, 4);
+  for (size_t i = 0; i < 20; i++) {
+    ECALL(rsx_pkt_reset(&rpkt));
 
-  ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
-  ECALL(data_dump(buff, size));
-  if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
-  if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 4)); // TODO: size + 2
-  ECALL(data_dump(buff, size + 4));                           // TODO: size + 2
-  ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
+    RSX_SPKT_SETID(rpkt, i + 1);
+    RSX_SPKT_SETFLAG(rpkt, 0xF);
+    RSX_SPKT_SETADDR(rpkt, 0x00);
+    RSX_SPKT_SETLENGTH(rpkt, 4);
 
-  printf("Model Number L:%02x H:%02x\n", RSX_SPKT_GET_U8(rpkt, 0), RSX_SPKT_GET_U8(rpkt, 1));
-  printf("Firmware Version:%02x\n", RSX_SPKT_GET_U8(rpkt, 2));
+    ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
+    ECALL(data_dump(buff, size));
+    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+    if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 4)); // TODO: size + 2
+    ECALL(data_dump(buff, size + 4));                           // TODO: size + 2
+    ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
+
+    printf("Model Number L:%02x H:%02x FW-ver:%02x\n", RSX_SPKT_GET_U8(rpkt, 0), RSX_SPKT_GET_U8(rpkt, 1), RSX_SPKT_GET_U8(rpkt, 2));
+    usleep(100 * 1000);
+  }
 
   ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
   const size_t num_of_servo = 20;
-  RSX_LPKT_DECL(pkt, num_of_servo, 10);
+  RSX_LPKT_DECL(pkt, num_of_servo, 20);
   RSX_LPKT_INIT(pkt);
   RSX_LPKT_SETADDR(pkt, 0x24);
   RSX_LPKT_SETLENGTH(pkt, 0x01);
   for (size_t i = 0; i < 20; i++) {
-    RSX_LPKT_SETID(pkt, i, i + 1);
+    RSX_LPKT_SETVID(pkt, i, i + 1);
     //RSX_LPKT_SET_U8(pkt, i, 0, 0x00); // servo off
     RSX_LPKT_SET_U8(pkt, i, 0, 0x01); // servo on
     //RSX_LPKT_SET_U8(pkt, i, 0, 0x02); // servo break
@@ -111,18 +115,19 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
   ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
+#if 1
   int pose[20][20] = {
     /*        1     2  |   3     4     5  |   6     7     8  |   9     10    11     12     13    14  |  15     16    17     18     19    20*/
-    /* 1*/{30, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
+    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
     /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 2, 0,  0,- 1, 0,  2,  1, 0},
     /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 6, 0,  0,- 3, 0,  6,  3, 0},
     /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,-12, 0,  0,- 6, 0, 12,  6, 0},
-    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-20, 0,  0,-10, 0, 20, 10, 0},
-    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-30, 0,  0,-15, 0, 30, 15, 0},
-    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-38, 0,  0,-19, 0, 38, 19, 0},
-    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-44, 0,  0,-22, 0, 44, 22, 0},
-    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-48, 0,  0,-24, 0, 48, 24, 0},
-    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 20, 0,- 90,-50, 0,  0,-25, 0, 50, 25, 0},
+    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
+    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
+    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
+    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
+    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
+    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
     /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
     /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
     /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
@@ -134,15 +139,19 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
     /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
   };
+  size_t num_of_pose = sizeof(pose) / sizeof(pose[0]);
+#endif
 
-  for (size_t idx = 0; idx < 20; idx++) {
+  for (size_t idx = 0; idx < 200; idx++) {
 
-#if 0
+#if 1
     RSX_LPKT_SETADDR(pkt, 0x1e);
     RSX_LPKT_SETLENGTH(pkt, 0x02);
     for (size_t i = 0; i < 20; i++) {
-      RSX_LPKT_SETID(pkt, i, i + 1);
-      RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[idx][i] * 10));
+      size_t pidx = idx % num_of_pose;
+      RSX_LPKT_SETVID(pkt, i, i + 1);
+      //RSX_LPKT_SET_INT16(pkt, i, 0, (int)(0 * 10));
+      RSX_LPKT_SET_INT16(pkt, i, 0, (int)(pose[pidx][i] * 10));
     }
 
     ECALL(rsx_pkt_ser(&pkt, buff, sizeof(buff), &size));
@@ -150,14 +159,14 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 #endif
 
-    ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+    //ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
  
-    usleep(1000 * 1000);
+    usleep(15 * 1000);
   }
 
   printf("\033[20B");
 
-  usleep(10 * 1000);
+  usleep(100 * 1000);
 
   /* servo off */
   RSX_LPKT_DECL(pkt2, num_of_servo, 2);
@@ -165,8 +174,10 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   RSX_LPKT_SETADDR(pkt2, 0x24);
   RSX_LPKT_SETLENGTH(pkt2, 0x01);
   for (size_t i = 0; i < 20; i++) {
-    RSX_LPKT_SETID(pkt2, i, i + 1);
-    RSX_LPKT_SET_U8(pkt2, i, 0, 0x00);
+    RSX_LPKT_SETVID(pkt2, i, i + 1);
+    RSX_LPKT_SET_U8(pkt2, i, 0, 0x00); // servo off
+    //RSX_LPKT_SET_U8(pkt2, i, 0, 0x01); // servo on
+    //RSX_LPKT_SET_U8(pkt, i, 0, 0x02); // servo break
   }
   ECALL(rsx_pkt_ser(&pkt2, buff, sizeof(buff), &size));
   ECALL(data_dump(buff, size));
@@ -174,7 +185,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
   printf("----- end ----- \n");
 
-  usleep(10 * 1000);
+  usleep(500 * 1000);
 
   return 0;
 }

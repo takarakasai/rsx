@@ -8,7 +8,7 @@
 /* for strto* */
 #include <stdlib.h>
 
-#include "rsx.h"
+#include "rsx_pkt.h"
 #include "rsx_io.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)

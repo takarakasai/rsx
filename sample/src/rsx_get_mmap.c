@@ -5,7 +5,7 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx.h"
+#include "rsx_pkt.h"
 #include "rsx_io.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
@@ -17,7 +17,6 @@
 int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   EVALUE(NULL, hrs);
 
-  size_t count = 0;
   uint8_t buff[1024];
   size_t size;
 

@@ -1,8 +1,10 @@
 
-#include "rsx.h"
+#include "rsx_pkt.h"
 
 /* for error print */
 #include <stdio.h>
+
+#define RSX_MAGIC_NUMBER 0xFAAF
 
 errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size) {
   EVALUE(NULL, pkt);
@@ -23,9 +25,13 @@ errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size) {
   return EOK;
 }
 
-errno_t rsx_pkt_init (rsx_pkt *pkt, uint8_t length, uint8_t count, uint8_t *data) {
+errno_t rsx_pkt_init (rsx_pkt *pkt, uint8_t length, uint8_t count, void *data) {
   EVALUE(NULL, pkt);
   EVALUE(NULL, data);
+
+  pkt->header = RSX_MAGIC_NUMBER;
+  pkt->id     = 0x00;
+  pkt->flag   = 0x00;
 
   pkt->length = length;
   pkt->count  = count;
@@ -34,22 +40,12 @@ errno_t rsx_pkt_init (rsx_pkt *pkt, uint8_t length, uint8_t count, uint8_t *data
   return EOK;
 }
 
-errno_t rsx_lpkt_init (rsx_pkt *pkt) {
+errno_t rsx_pkt_reset (rsx_pkt *pkt) {
   EVALUE(NULL, pkt);
 
   pkt->header = 0xFAAF;
   pkt->id     = 0x00;
   pkt->flag   = 0x00;
-
-  return EOK;
-}
-
-errno_t rsx_spkt_init (rsx_pkt *pkt, uint8_t id, uint8_t flag) {
-  EVALUE(NULL, pkt);
-
-  pkt->header = 0xFAAF;
-  pkt->id     = id;
-  pkt->flag   = flag;
 
   return EOK;
 }

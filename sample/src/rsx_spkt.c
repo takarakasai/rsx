@@ -5,7 +5,7 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx.h"
+#include "rsx_pkt.h"
 #include "rsx_io.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
@@ -23,7 +23,7 @@ errno_t get_current (hr_serial *hrs, rsx_pkt *rpkt, void* buff/*[size]*/, size_t
   for (size_t i = 0; i < num_of_axis; i++) {
     size_t retry = 1;
     for (size_t j = 0; j < retry; j++) {
-      ECALL(rsx_lpkt_init(rpkt));
+      ECALL(rsx_pkt_reset(rpkt));
       RSX_SPKT_SETID(*rpkt, 0x01);
       RSX_SPKT_SETFLAG(*rpkt, 0xF);
       RSX_SPKT_SETADDR(*rpkt, 0x2A);
