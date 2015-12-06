@@ -77,7 +77,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   RSX_SPKT_DECL(rpkt, 32);
   RSX_SPKT_INIT(rpkt);
 
-  for (size_t i = 0; i < 20; i++) {
+  for (size_t i = 0; i < 3; i++) {
     ECALL(rsx_pkt_reset(&rpkt));
 
     RSX_SPKT_SETID(rpkt, i + 1);
@@ -96,7 +96,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     usleep(100 * 1000);
   }
 
-  ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
+  //ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
   const size_t num_of_servo = 20;
   RSX_LPKT_DECL(pkt, num_of_servo, 20);
@@ -113,31 +113,59 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   ECALL(data_dump(buff, size));
   if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
+  printf("SERVO STATUS : ");
+  for (size_t i = 0; i < 20; i++) {
+    printf(" |%02zd", i + 1);
+  }
+  printf("\n");
+  printf("             : ");
+  for (size_t i = 0; i < 20; i++) {
+    ECALL(rsx_pkt_reset(&rpkt));
+
+    RSX_SPKT_SETID(rpkt, i + 1);
+    RSX_SPKT_SETFLAG(rpkt, 0xF);
+    RSX_SPKT_SETADDR(rpkt, 0x24);
+    RSX_SPKT_SETLENGTH(rpkt, 1);
+
+    ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
+    ECALL(data_dump(buff, size));
+    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+    usleep(10 * 1000);
+    if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 1)); // TODO: size + 2
+    ECALL(data_dump(buff, size + 1));                           // TODO: size + 2
+    ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
+
+    printf(" |%02x", RSX_SPKT_GET_U8(rpkt, 0));
+
+    usleep(20 * 1000);
+  }
+  printf("\n");
+
   ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
 #if 1
   int pose[20][20] = {
     /*        1     2  |   3     4     5  |   6     7     8  |   9     10    11     12     13    14  |  15     16    17     18     19    20*/
-    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
-    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 2, 0,  0,- 1, 0,  2,  1, 0},
-    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 6, 0,  0,- 3, 0,  6,  3, 0},
-    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,-12, 0,  0,- 6, 0, 12,  6, 0},
-    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
-    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
-    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
-    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
-    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
-    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
-    /*10*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
-    /* 9*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
-    /* 8*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
-    /* 7*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
-    /* 6*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
-    /* 5*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
-    /* 4*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,- 6, 0,  0,- 6, 0, 12,  6, 0},
-    /* 3*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 3, 0,  0,- 3, 0,  6,  3, 0},
-    /* 2*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
-    /* 1*/{ 0, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
+    /* 1*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
+    /* 2*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 2, 0,  0,- 1, 0,  2,  1, 0},
+    /* 3*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 6, 0,  0,- 3, 0,  6,  3, 0},
+    /* 4*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,-12, 0,  0,- 6, 0, 12,  6, 0},
+    /* 5*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
+    /* 6*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
+    /* 7*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
+    /* 8*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
+    /* 9*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
+    /*10*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
+    /*10*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 25, 0,- 50,-25, 0,  0,-25, 0, 50, 25, 0},
+    /* 9*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 24, 0,- 48,-24, 0,  0,-24, 0, 48, 24, 0},
+    /* 8*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 22, 0,- 44,-22, 0,  0,-22, 0, 44, 22, 0},
+    /* 7*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 19, 0,- 38,-19, 0,  0,-19, 0, 38, 19, 0},
+    /* 6*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 15, 0,- 30,-15, 0,  0,-15, 0, 30, 15, 0},
+    /* 5*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0, 10, 0,- 20,-10, 0,  0,-10, 0, 20, 10, 0},
+    /* 4*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  6, 0,- 12,- 6, 0,  0,- 6, 0, 12,  6, 0},
+    /* 3*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  3, 0,-  6,- 3, 0,  0,- 3, 0,  6,  3, 0},
+    /* 2*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  1, 0,-  2,- 1, 0,  0,- 1, 0,  2,  1, 0},
+    /* 1*/{ -30, 0,  0, 0, 0,  0, 0, 0,  0,  0, 0,   0,  0, 0,  0,  0, 0,  0,  0, 0},
   };
   size_t num_of_pose = sizeof(pose) / sizeof(pose[0]);
 #endif
@@ -168,20 +196,24 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
   usleep(100 * 1000);
 
-  /* servo off */
-  RSX_LPKT_DECL(pkt2, num_of_servo, 2);
-  RSX_LPKT_INIT(pkt2);
-  RSX_LPKT_SETADDR(pkt2, 0x24);
-  RSX_LPKT_SETLENGTH(pkt2, 0x01);
-  for (size_t i = 0; i < 20; i++) {
-    RSX_LPKT_SETVID(pkt2, i, i + 1);
-    RSX_LPKT_SET_U8(pkt2, i, 0, 0x00); // servo off
-    //RSX_LPKT_SET_U8(pkt2, i, 0, 0x01); // servo on
-    //RSX_LPKT_SET_U8(pkt, i, 0, 0x02); // servo break
+  for (size_t i=0;i<10;i++) {
+    /* servo off */
+    RSX_LPKT_DECL(pkt2, num_of_servo, 2);
+    RSX_LPKT_INIT(pkt2);
+    RSX_LPKT_SETADDR(pkt2, 0x24);
+    RSX_LPKT_SETLENGTH(pkt2, 0x01);
+    for (size_t i = 0; i < 20; i++) {
+      RSX_LPKT_SETVID(pkt2, i, i + 1);
+      RSX_LPKT_SET_U8(pkt2, i, 0, 0x00); // servo off
+      //RSX_LPKT_SET_U8(pkt2, i, 0, 0x01); // servo on
+      //RSX_LPKT_SET_U8(pkt, i, 0, 0x02); // servo break
+    }
+    ECALL(rsx_pkt_ser(&pkt2, buff, sizeof(buff), &size));
+    ECALL(data_dump(buff, size));
+    if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
+
+    usleep(100 * 1000);
   }
-  ECALL(rsx_pkt_ser(&pkt2, buff, sizeof(buff), &size));
-  ECALL(data_dump(buff, size));
-  if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
   printf("----- end ----- \n");
 
@@ -205,6 +237,7 @@ int main(int argc, char *argv[]) {
   }
 
   run_test(argc, argv, &hrs, use_serial);
+  printf("\n");
 
   if (use_serial) ECALL(hr_serial_close(&hrs));
 

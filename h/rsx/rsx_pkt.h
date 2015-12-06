@@ -34,7 +34,8 @@
 #define ECALL(function)     \
   do {                      \
     errno_t eno = function; \
-    if (eno != EOK) {        \
+    if (eno != EOK) {       \
+      fprintf(stderr, "--> %s %s %d\n", __FILE__, __FUNCTION__, __LINE__); \
       return eno;           \
     }                       \
   } while(0)
@@ -115,6 +116,10 @@
 #define RSX_SPKT_RTN_FLG_30TO041   0x0B /* 0b 0000 1011 */
 #define RSX_SPKT_RTN_FLG_60TO127   0x0C /* 0b 0000 1101 */
 #define RSX_SPKT_RTN_FLG_ADDR      0x0F /* 0b 0000 1111 */
+
+#define RSX_DATA_SERVO_OFF 0x00
+#define RSX_DATA_SERVO_ON  0x01
+#define RSX_DATA_SERVO_BRK 0x02
 
 typedef struct {
   uint16_t    header; /* magic number for short packet. */
