@@ -63,8 +63,14 @@ errno_t rsx_spkt_write_read (rsx *x) {
   if (x->use_serial) {
     for (size_t cnt = 0; cnt < x->retry_count; cnt++) {
       ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
+
       const size_t recv_payload_size = RSX_SPKT_GETLENGTH(*(x->spkt));
       errno_t eno = hr_serial_read(x->hrs, x->buff, pkt_size + recv_payload_size);
+      //printf("------> %d %d+%d\n", size, pkt_size, recv_payload_size);
+
+      //uint8_t size;
+      //ECALL(rsx_pkt_get_rtn_size(x->spkt, &size));
+      //errno_t eno = hr_serial_read(x->hrs, x->buff, size);
       if (eno == EOK) {
         ECALL(rsx_pkt_deser(x->spkt, x->buff, x->max_size, &pkt_size));
         break;

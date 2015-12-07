@@ -102,11 +102,13 @@
 #define RSX_PKT_ID_ALL  0xFF
 
 /* upper 4bit */
+#define RSX_SPKT_SND_FLG_MASK      0xF0 /* 0b 1111 0000 */
 #define RSX_SPKT_SND_FLG_DEFAULT   0x00 /* 0b 0000 0000 */
 #define RSX_SPKT_SND_FLG_WRFLASH   0x40 /* 0b 0100 0000 */
 #define RSX_SPKT_SND_FLG_RESTART   0x20 /* 0b 0010 0000 */
 #define RSX_SPKT_SND_FLG_RST_MEM   0x10 /* 0b 0001 0000 */
 /* lower 4bit */
+#define RSX_SPKT_RTN_FLG_MASK      0x0F /* 0b 0000 1111 */
 #define RSX_SPKT_RTN_FLG_RTNLESS   0x00 /* 0b 0000 0000 */
 #define RSX_SPKT_RTN_FLG_ACKNACK   0x01 /* 0b 0000 0001 */
 #define RSX_SPKT_RTN_FLG_00TO029   0x03 /* 0b 0000 0011 */
@@ -130,9 +132,14 @@ typedef struct {
   uint8_t      count;
   uint8_t      *data;
   uint8_t  check_sum;
+
+  /* internal use */
+  //uint8_t expt_rcv_size;
 } rsx_pkt; // RS301/302 short/long packet
 
-errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size);
+//errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size);
+errno_t rsx_pkt_get_snd_size (rsx_pkt *pkt, uint8_t *size);
+errno_t rsx_pkt_get_rtn_size (rsx_pkt *pkt, uint8_t *size);
 errno_t rsx_pkt_init  (rsx_pkt *pkt, uint8_t length, uint8_t count, void *data);
 errno_t rsx_pkt_reset (rsx_pkt *pkt);
 errno_t rsx_pkt_deser (rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num, size_t *size);
@@ -141,13 +148,13 @@ errno_t rsx_pkt_ser   (rsx_pkt *pkt, uint8_t dst[/*max_num*/], size_t max_num, s
 static inline errno_t data_dump (uint8_t *data, size_t size) {
   EVALUE(NULL, data);
 
-//#if defined(DATA_DUMP)
+#if defined(DATA_DUMP)
   printf("size:%04zd ::", size);
   for (size_t i = 0; i < size; i++) {
     printf(" %02x", data[i]);
   }
   printf("\n");
-//#endif
+#endif
 
   return EOK;
 }

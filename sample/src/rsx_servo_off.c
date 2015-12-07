@@ -8,10 +8,6 @@
 
 #include "rsx.h"
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
-#include "time/hr_unixtime.h"
-#endif
-
 static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
   EVALUE(NULL, servo);
 
@@ -23,7 +19,6 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
     id[i] = i + 1;
   }
 
-  //ECALL(rsx_lpkt_mem_write_all(servo, ((uint8_t[]){1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}), 20, 0x24, 1, ((uint8_t[]){servo_state})));
   ECALL(rsx_lpkt_mem_write_all(servo, id, num_of_joints, 0x24, 1, ((uint8_t[]){servo_state})));
 
   uint8_t data[num_of_joints][1];
