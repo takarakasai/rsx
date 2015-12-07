@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "rsx.h"
+#include "mmap/rs30x.h"
 
 static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
   EVALUE(NULL, servo);
@@ -19,12 +20,12 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
     id[i] = i + 1;
   }
 
-  ECALL(rsx_lpkt_mem_write_all(servo, id, num_of_joints, 0x24, 1, ((uint8_t[]){servo_state})));
+  ECALL(rsx_lpkt_mem_write_all(servo, id, num_of_joints, RSX_RAM_TRQ_ENABLE, 1, ((uint8_t[]){servo_state})));
 
   uint8_t data[num_of_joints][1];
   for (size_t i = 0; i < num_of_joints; i++) {
     usleep(20 * 1000);
-    ECALL(rsx_spkt_mem_read(servo, id[i], 0x24, 1, data[i]));
+    ECALL(rsx_spkt_mem_read(servo, id[i], RSX_RAM_TRQ_ENABLE, 1, data[i]));
   }
  
   printf("             : "); for (size_t i = 0; i < num_of_joints; i++) { printf(" |%02zd",      i + 1);} printf("\n");
