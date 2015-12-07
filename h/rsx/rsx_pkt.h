@@ -66,12 +66,12 @@
 #define RSX_PKT_GET_U8(pkt, count, idx, ofst)      (((uint8_t*)(pkt).data)[count * (pkt).length + (idx + ofst)])
 
 //#define RSX_LPKT_SETID(pkt, count, id)  do{pkt.data[count * pkt.length] = id;}while(0)
-#define RSX_LPKT_SETVID(pkt, count, id) do{pkt.data[count * pkt.length] = id;}while(0)
-#define RSX_LPKT_SETFLAG(pkt, val)      do{pkt.flag    = val    ;}while(0)
+#define RSX_LPKT_SETVID(pkt, count, id) do{(pkt).data[count * (pkt).length] = id;}while(0)
+#define RSX_LPKT_SETFLAG(pkt, val)      do{(pkt).flag    = val    ;}while(0)
 #define RSX_LPKT_GETFLAG(pkt)           ((pkt).flag)
-#define RSX_LPKT_SETADDR(pkt, val)      do{pkt.address = val    ;}while(0)
-#define RSX_LPKT_SETLENGTH(pkt, val)    do{pkt.length  = val + sizeof(uint8_t);}while(0) // sizeof(uint8_t) is for id size:
-#define RSX_LPKT_SETCOUNT(pkt, val)     do{pkt.count   = val  ;}while(0)
+#define RSX_LPKT_SETADDR(pkt, val)      do{(pkt).address = val    ;}while(0)
+#define RSX_LPKT_SETLENGTH(pkt, val)    do{(pkt).length  = val + sizeof(uint8_t);}while(0) // sizeof(uint8_t) is for id size:
+#define RSX_LPKT_SETCOUNT(pkt, val)     do{(pkt).count   = val  ;}while(0)
 #define RSX_LPKT_GETLENGTH(pkt)         RSX_PKT_GETLENGTH(pkt)
 #define RSX_LPKT_GETCOUNT(pkt)          RSX_PKT_GETCOUNT(pkt)
 #define RSX_LPKT_SET_U8(pkt, count, idx, data) RSX_PKT_SET_U8(pkt, count, idx, 1, data)
@@ -141,13 +141,13 @@ errno_t rsx_pkt_ser   (rsx_pkt *pkt, uint8_t dst[/*max_num*/], size_t max_num, s
 static inline errno_t data_dump (uint8_t *data, size_t size) {
   EVALUE(NULL, data);
 
-#if defined(DATA_DUMP)
+//#if defined(DATA_DUMP)
   printf("size:%04zd ::", size);
   for (size_t i = 0; i < size; i++) {
     printf(" %02x", data[i]);
   }
   printf("\n");
-#endif
+//#endif
 
   return EOK;
 }

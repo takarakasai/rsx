@@ -6,84 +6,49 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "rsx_pkt.h"
-#include "rsx_io.h"
+#include "rsx.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"
 #endif
 
-#include <stdbool.h>
-
-static int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial, uint8_t servo_state) {
-  EVALUE(NULL, hrs);
+static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
+  EVALUE(NULL, servo);
 
   printf(" ---> %x\n", servo_state);
 
-  //size_t count = 0;
-  uint8_t buff[1024];
-  size_t size;
-
-  const size_t num_of_servo = 20;
-  RSX_LPKT_DECL(pkt, num_of_servo, 20);
-  RSX_LPKT_INIT(pkt);
-  RSX_LPKT_SETADDR(pkt, 0x24);
-  RSX_LPKT_SETLENGTH(pkt, 0x01);
-  for (size_t i = 0; i < 20; i++) {
-    RSX_LPKT_SETVID(pkt, i, i + 1);
-    RSX_LPKT_SET_U8(pkt, i, 0, servo_state);
-    //RSX_LPKT_SET_U8(pkt, i, 0, RSX_DATA_SERVO_OFF); // servo off
-    //RSX_LPKT_SET_U8(pkt, i, 0, RSX_DATA_SERVO_ON); // servo on
-    //RSX_LPKT_SET_U8(pkt, i, 0, RSX_DATA_SERVO_BRK); // servo break
+  const uint8_t num_of_joints = 20;
+  uint8_t id[num_of_joints];
+  for (size_t i = 0; i < num_of_joints; i++) {
+    id[i] = i + 1;
   }
-  ECALL(rsx_pkt_ser(&pkt, buff, sizeof(buff), &size));
-  ECALL(data_dump(buff, size));
-  if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-  RSX_SPKT_DECL(rpkt, 32);
-  RSX_SPKT_INIT(rpkt);
+  //ECALL(rsx_lpkt_mem_write_all(servo, ((uint8_t[]){1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}), 20, 0x24, 1, ((uint8_t[]){servo_state})));
+  ECALL(rsx_lpkt_mem_write_all(servo, id, num_of_joints, 0x24, 1, ((uint8_t[]){servo_state})));
 
-  printf("SERVO STATUS : ");
-  for (size_t i = 0; i < 20; i++) {
-    printf(" |%02zd", i + 1);
-  }
-  printf("\n");
-  printf("             : ");
-  for (size_t i = 0; i < 20; i++) {
-    ECALL(rsx_pkt_reset(&rpkt));
-
-    RSX_SPKT_SETID(rpkt, i + 1);
-    RSX_SPKT_SETFLAG(rpkt, 0xF);
-    RSX_SPKT_SETADDR(rpkt, 0x24);
-    RSX_SPKT_SETLENGTH(rpkt, 1);
-
-    ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
-    ECALL(data_dump(buff, size));
-    if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
-    usleep(10 * 1000);
-    if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 1)); // TODO: size + 2
-    ECALL(data_dump(buff, size + 1));                           // TODO: size + 2
-    ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
-
-    printf(" |%02x", RSX_SPKT_GET_U8(rpkt, 0));
-
+  uint8_t data[num_of_joints][1];
+  for (size_t i = 0; i < num_of_joints; i++) {
     usleep(20 * 1000);
+    ECALL(rsx_spkt_mem_read(servo, id[i], 0x24, 1, data[i]));
   }
-  printf("\n");
+ 
+  printf("             : "); for (size_t i = 0; i < num_of_joints; i++) { printf(" |%02zd",      i + 1);} printf("\n");
+  printf("SERVO STATUS : "); for (size_t i = 0; i < num_of_joints; i++) { printf(" |%02x" , data[i][0]);} printf("\n");
 
   return 0;
 }
 
 int main(int argc, char *argv[]) {
-  hr_serial hrs;
-  ECALL(hr_serial_init(&hrs));
+  RSX_DECL(servo, 20, 1024);
+  RSX_INIT(servo);
 
   bool use_serial = false;
   uint8_t servo_state = RSX_DATA_SERVO_OFF;
 
   if (argc >= 4) {
     use_serial = true;
-    ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
+    ECALL(rsx_open(&servo, argv[1], argv[2]));
+
     if (strcmp(argv[3], "ON") == 0) {
       servo_state = RSX_DATA_SERVO_ON;
     } else if (strcmp(argv[3], "BRK" ) == 0) {
@@ -91,14 +56,17 @@ int main(int argc, char *argv[]) {
     } else {
       servo_state = RSX_DATA_SERVO_OFF;
     }
+
   } else {
     use_serial = true;
-    ECALL(hr_serial_open(&hrs, "ttyUSB", "0"));
+    ECALL(rsx_open(&servo, "ttyUSB", "0"));
   }
 
-  run_test(argc, argv, &hrs, use_serial, servo_state);
+  ECALL(rsx_set_serial(&servo, use_serial));
 
-  if (use_serial) ECALL(hr_serial_close(&hrs));
+  run_test(argc, argv, &servo, servo_state);
+
+  ECALL(rsx_close(&servo));
 
   return 0;
 }

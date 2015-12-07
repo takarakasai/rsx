@@ -4,6 +4,8 @@
 /* for error print */
 #include <stdio.h>
 
+#include "serial/hr_serial.h"
+
 #define RSX_MAGIC_NUMBER 0xFAAF
 
 errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size) {
