@@ -6,6 +6,9 @@
 #include <stdio.h>
 #endif
 
+/* for stderr */
+#include <stdio.h>
+
 #include "rsx_type.h"
 
 #define EVALUE(value, variable) \
