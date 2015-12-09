@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.4)
 project(rsx)
 
 option(ENABLE_SAMPLE "enable to build sample app" ON)
+option(ENABLE_PYTHON_API "enable to build python api" OFF)
 
 option(HR_SERIAL_AUTO_READ_ECHO_DATA "" ON)
 if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
@@ -42,9 +43,14 @@ if(${ENABLE_SAMPLE})
     add_subdirectory(sample)
 endif()
 
+if(${ENABLE_PYTHON_API})
+    add_subdirectory(python)
+endif()
+
 if(${UNIX})
     install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME} DESTINATION include)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/h/rsxpp DESTINATION include)
 elseif(${MINGW})
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${INSTALL_DIR})
 endif()
