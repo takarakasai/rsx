@@ -85,6 +85,14 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     return EOK;
   }
 
+  errno_t lpkt_mem_write_int16_all (bp::list &in_id, uint8_t start_addr, bp::list &in_data) {
+    GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
+    GET_C_ARRAY(int16_t, size, data/*[size]*/, in_data);
+
+    ECALL(base::lpkt_mem_write_int16_all(id, num, start_addr, size, data));
+    return EOK;
+  }
+
  protected:
 
  private: 

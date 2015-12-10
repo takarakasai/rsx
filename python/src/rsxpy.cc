@@ -62,6 +62,7 @@ BOOST_PYTHON_MODULE( rsx_py ) {
       .def("lpkt_mem_write", &rsxpy::lpkt_mem_write)
       .def("lpkt_mem_write_int16", &rsxpy::lpkt_mem_write_int16)
       .def("lpkt_mem_write_all", (errno_t (rsxpy::*) (boost::python::list &in_id, uint8_t start_addr, boost::python::list &in_data))&rsxpy::lpkt_mem_write_all)
+      .def("lpkt_mem_write_int16_all", &rsxpy::lpkt_mem_write_int16_all)
       .def("set_serial", &rsxpy::set_serial)
       //.add_property("servo", &rsxc::servo)
       ; 

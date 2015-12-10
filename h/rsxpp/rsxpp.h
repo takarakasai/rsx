@@ -76,6 +76,11 @@ namespace dp {
       return EOK;
     }
 
+    errno_t lpkt_mem_write_int16_all (uint8_t id[/*num*/], uint8_t num , uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+      ECALL(rsx_lpkt_mem_write_int16_all(servo, id, num, start_addr, size, data));
+      return EOK;
+    }
+
     errno_t set_serial (bool use_serial) {
       ECALL(rsx_set_serial(servo, use_serial));
       return EOK;

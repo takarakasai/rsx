@@ -208,3 +208,19 @@ errno_t rsx_lpkt_mem_write_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint
   return 0;
 }
 
+errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+  EVALUE(NULL, rsx);
+
+  RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
+  RSX_LPKT_SETLENGTH(*(rsx->lpkt), size);
+  for (size_t i = 0; i < num; i++) {
+    RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
+    for (size_t j = 0; j < size; j += 2) {
+      RSX_LPKT_SET_INT16(*(rsx->lpkt), i, j, data[j]);
+    }
+  }
+  ECALL(rsx_lpkt_write(rsx));
+
+  return 0;
+}
+
