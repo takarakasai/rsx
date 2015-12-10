@@ -64,6 +64,7 @@ errno_t rsx_spkt_write_read (rsx *x) {
     for (size_t cnt = 0; cnt < x->retry_count; cnt++) {
       ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
 
+      //usleep(10 * 1000);
       const size_t recv_payload_size = RSX_SPKT_GETLENGTH(*(x->spkt));
       errno_t eno = hr_serial_read(x->hrs, x->buff, pkt_size + recv_payload_size);
       //printf("------> %d %d+%d\n", size, pkt_size, recv_payload_size);

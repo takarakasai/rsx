@@ -9,6 +9,7 @@
 
 #define EVALUE(value, variable) \
   if ((value) == (variable)) {      \
+    fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);        \
     return EINVAL;              \
   }
 

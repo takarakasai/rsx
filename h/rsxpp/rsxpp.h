@@ -6,17 +6,24 @@ extern "C" {
   #include "rsx.h"
 }
 
-namespace servo {
+#include "boost/python.hpp"
 
-  class rsxc
+namespace dp {
+
+  template <size_t kNUM_OF_JOINTS, size_t kMAX_PKT_SIZE>
+  class rsxpp
   {
    public:
-    rsxc(void) {
+    rsxpp(void) {
       RSX_INIT(servo_inst);
       servo = &servo_inst;
     }
 
-    ~rsxc(void) {
+    ~rsxpp(void) {
+      errno_t eno = rsx_close(servo);
+      if (eno != EOK) {
+        fprintf(stderr, "rsx_close error at %s\n", __FUNCTION__);
+      }
     }
 
     errno_t open (const char8_t *device, const char8_t *port) {
@@ -74,9 +81,10 @@ namespace servo {
       return EOK;
     }
  
-   private: 
-    RSX_DECL(servo_inst, 20, 32);
+   protected: 
+    RSX_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE);
     rsx *servo;
+   private:
   };
 }
 

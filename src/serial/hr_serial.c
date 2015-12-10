@@ -112,6 +112,10 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
 errno_t hr_serial_close (hr_serial *ser) {
   EVALUE(NULL, ser);
 
+  if (ser->fd == 0) {
+    return EOK;
+  }
+
   ECALL(setattr(ser->fd, &(ser->prev_term)));
   ECALL(_close(ser->fd));
   ser->fd = 0;
@@ -140,6 +144,7 @@ static errno_t serial_read (hr_serial *ser, void* data, size_t size) {
       ((uint8_t*)data)[rcv_cnt + i] = rdata[i];
     }
     rcv_cnt += read_size;
+
 
     if (size == rcv_cnt) {
       eno = EOK;

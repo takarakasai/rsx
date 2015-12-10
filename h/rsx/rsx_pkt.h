@@ -13,22 +13,25 @@
 
 #define EVALUE(value, variable) \
   if ((value) == (variable)) {      \
+    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
     return EINVAL;              \
   }
 
 #define ELTGT(lvalue, hvalue, variable)              \
   if ((variable < lvalue) || (hvalue < variable)) {  \
-    printf("%d %d %d\n", (int)lvalue, (int)hvalue, (int)variable);  \
+    fprintf(stderr, "%s %s %d (%d < %d < %d)\n", __FILE__, __FUNCTION__, __LINE__, (int)lvalue, (int)hvalue, (int)variable);        \
     return EINVAL;                                   \
   }
 
 #define ELTGE(lvalue, hvalue, variable)              \
   if ((variable < lvalue) || (hvalue <= variable)) { \
+    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
     return EINVAL;                                   \
   }
 
 #define ELEGT(lvalue, hvalue, variable)              \
   if ((variable <= lvalue) || (hvalue < variable)) { \
+    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
     return EINVAL;                                   \
   }
 
