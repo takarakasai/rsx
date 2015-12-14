@@ -10,41 +10,7 @@
 #include <stdio.h>
 
 #include "rsx_type.h"
-
-#define EVALUE(value, variable) \
-  if ((value) == (variable)) {      \
-    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
-    return EINVAL;              \
-  }
-
-#define ELTGT(lvalue, hvalue, variable)              \
-  if ((variable < lvalue) || (hvalue < variable)) {  \
-    fprintf(stderr, "%s %s %d (%d < %d < %d)\n", __FILE__, __FUNCTION__, __LINE__, (int)lvalue, (int)hvalue, (int)variable);        \
-    return EINVAL;                                   \
-  }
-
-#define ELTGE(lvalue, hvalue, variable)              \
-  if ((variable < lvalue) || (hvalue <= variable)) { \
-    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
-    return EINVAL;                                   \
-  }
-
-#define ELEGT(lvalue, hvalue, variable)              \
-  if ((variable <= lvalue) || (hvalue < variable)) { \
-    fprintf(stderr, "%s %s %d \n", __FILE__, __FUNCTION__, __LINE__);        \
-    return EINVAL;                                   \
-  }
-
-#define EOK 0
-
-#define ECALL(function)     \
-  do {                      \
-    errno_t eno = function; \
-    if (eno != EOK) {       \
-      fprintf(stderr, "--> %s %s %d\n", __FILE__, __FUNCTION__, __LINE__); \
-      return eno;           \
-    }                       \
-  } while(0)
+#include "rsx_err.h"
 
 /*
  * @length  max length of data payload
@@ -103,6 +69,7 @@
         RSX_SPKT_SET_U8(pkt, idx    , (data     ) & 0xFF);\
         RSX_SPKT_SET_U8(pkt, idx + 1, (data >> 8) & 0xFF);\
     } while(0)
+#define RSX_SPKT_GET_INT16(pkt, idx) (((int16_t)RSX_SPKT_GET_U8(pkt, idx)) | (((int16_t)RSX_SPKT_GET_U8(pkt, idx + 1)) << 8))
 
 #define RSX_PKT_ID_LONG 0x00
 #define RSX_PKT_ID_ALL  0xFF

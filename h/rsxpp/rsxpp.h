@@ -4,6 +4,7 @@
 
 extern "C" {
   #include "rsx.h"
+  #include "serial/hr_serial.h"
 }
 
 #include "boost/python.hpp"
@@ -26,8 +27,8 @@ namespace dp {
       }
     }
 
-    errno_t open (const char8_t *device, const char8_t *port) {
-      ECALL(rsx_open(servo, device, port));
+    errno_t open (const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity) {
+      ECALL(rsx_open(servo, device, port, baudrate, parity));
       return EOK;
     }
 
@@ -56,8 +57,18 @@ namespace dp {
       return EOK;
     }
 
+    errno_t spkt_mem_write_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+      ECALL(rsx_spkt_mem_write_int16(servo, id, start_addr, size, data));
+      return EOK;
+    }
+
     errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
       ECALL(rsx_spkt_mem_read(servo, id, start_addr, size, data));
+      return EOK;
+    }
+
+    errno_t spkt_mem_read_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+      ECALL(rsx_spkt_mem_read_int16(servo, id, start_addr, size, data));
       return EOK;
     }
 

@@ -186,10 +186,10 @@ int main(int argc, char *argv[]) {
 
   if (argc >= 3) {
     use_serial = true;
-    ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
+    ECALL(hr_serial_open(&hrs, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
   } else {
     use_serial = true;
-    ECALL(hr_serial_open(&hrs, "ttyUSB", "0"));
+    ECALL(hr_serial_open(&hrs, "ttyUSB", "0", HR_B460800, HR_PAR_NONE));
   }
 
   run_test(argc, argv, &hrs, use_serial);

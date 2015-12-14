@@ -1,4 +1,7 @@
 
+#ifndef RSX_H
+#define RSX_H
+
 #include "rsx_type.h"
 
 #include "rsx_pkt.h"
@@ -34,18 +37,22 @@ typedef struct {
 } rsx;
 
 errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt, hr_serial *hrs, uint8_t buff[/*max_size*/], size_t max_size);
-errno_t rsx_open (rsx *x, const char8_t *device, const char8_t *port);
+errno_t rsx_open (rsx *x, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity);
 errno_t rsx_close (rsx *x);
 errno_t rsx_spkt_write (rsx *x);
 errno_t rsx_spkt_write_read (rsx *x);
 errno_t rsx_lpkt_write (rsx *x);
 
 errno_t rsx_spkt_mem_write (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]);
+errno_t rsx_spkt_mem_write_int16 (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]);
 errno_t rsx_spkt_mem_read (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]);
+errno_t rsx_spkt_mem_read_int16 (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]);
 errno_t rsx_lpkt_mem_write (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, const uint8_t size, uint8_t **data/*[num][size]*/);
 errno_t rsx_lpkt_mem_write_int16 (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t **data/*[num][size]*/);
 errno_t rsx_lpkt_mem_write_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]);
 errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]);
 
 errno_t rsx_set_serial (rsx *x, bool use_serial);
+
+#endif
  

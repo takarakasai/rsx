@@ -13,6 +13,8 @@
 /* for usleep */
 #include <unistd.h>
 
+#define ICS
+
 static const size_t timeout_usec = 200;
 static const size_t wait_usec    = 10;
 
@@ -22,16 +24,68 @@ static errno_t setraw(struct termios *term) {
   term->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
   term->c_oflag &= ~OPOST;
   term->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-  //term->c_cflag &= ~(CSIZE | PARENB);
-  term->c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
-  //term->c_cflag |= CS8 | CRTSCTS;
+  term->c_cflag &= ~(CSIZE | CRTSCTS);          /* flag off */
   term->c_cflag |= CS8;
 
   return EOK;
 }
 
-static errno_t setspeed (struct termios *term, speed_t speed) {
+static errno_t set_cflag (struct termios *term, tcflag_t parity) {
   EVALUE(NULL, term);
+
+  term->c_cflag |= parity;                      /* flag on  */
+
+  return EOK;
+}
+
+static errno_t unset_cflag (struct termios *term, tcflag_t parity) {
+  EVALUE(NULL, term);
+
+  term->c_cflag &= ~parity;                     /* flag off  */
+
+  return EOK;
+}
+
+static errno_t set_parity (struct termios *term, hr_parity parity) {
+  EVALUE(NULL, term);
+
+  switch(parity) {
+      case HR_PAR_NONE:
+      ECALL(unset_cflag(term, PARENB));
+      break;
+    case HR_PAR_EVEN:
+      ECALL(set_cflag(term, PARENB));
+      ECALL(unset_cflag(term, PARODD));
+      break;
+    case HR_PAR_ODD:
+      ECALL(set_cflag(term, PARENB));
+      ECALL(set_cflag(term, PARODD));
+      break;
+    default:
+      return EINVAL;
+      break;
+  }
+
+  return EOK;
+}
+
+static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
+  EVALUE(NULL, term);
+
+  speed_t speed;
+  switch (baudrate) {
+    case HR_B9600   : speed = B9600    ; break;
+    case HR_B19200  : speed = B19200   ; break;
+    case HR_B38400  : speed = B38400   ; break;
+    case HR_B57600  : speed = B57600   ; break;
+    case HR_B115200 : speed = B115200  ; break;
+    case HR_B230400 : speed = B230400  ; break;
+    case HR_B460800 : speed = B460800  ; break;
+    case HR_B576000 : speed = B576000  ; break;
+    case HR_B1152000: speed = B1152000 ; break;
+    default :
+      return EINVAL;
+  }
 
   errno_t eno;
 
@@ -80,7 +134,7 @@ errno_t hr_serial_init (hr_serial *ser) {
   return EOK;
 }
 
-errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
+errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_baudrate baudrate, hr_parity parity) {
   EVALUE(NULL, ser);
   EVALUE(NULL, dev);
   EVALUE(NULL, unit);
@@ -101,9 +155,12 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
   ECALL(_open(path, &(ser->fd)));
 
   tcgetattr(ser->fd, &(ser->prev_term)); /* 現在のポート設定を待避 */
+
   ECALL(setraw(&(ser->term)));
-  //ECALL(setspeed(&(ser->term), B115200));
-  ECALL(setspeed(&(ser->term), B460800));
+
+  ECALL(set_parity(&(ser->term), parity));
+  ECALL(setspeed(&(ser->term), baudrate));
+
   ECALL(setattr(ser->fd, &(ser->term)));
 
   return EOK;

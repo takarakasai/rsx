@@ -27,9 +27,9 @@ errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt, hr_serial *hrs, uint8_
   return EOK;
 }
 
-errno_t rsx_open (rsx *x, const char8_t *device, const char8_t *port){
+errno_t rsx_open (rsx *x, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity){
   EVALUE(NULL, x);
-  if (x->use_serial) ECALL(hr_serial_open(x->hrs, device, port));
+  if (x->use_serial) ECALL(hr_serial_open(x->hrs, device, port, baudrate, parity));
   return EOK;
 }
 
@@ -63,11 +63,13 @@ errno_t rsx_spkt_write_read (rsx *x) {
   if (x->use_serial) {
     for (size_t cnt = 0; cnt < x->retry_count; cnt++) {
       ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
+      ECALL(data_dump(x->buff, pkt_size));
 
       //usleep(10 * 1000);
       const size_t recv_payload_size = RSX_SPKT_GETLENGTH(*(x->spkt));
       errno_t eno = hr_serial_read(x->hrs, x->buff, pkt_size + recv_payload_size);
       //printf("------> %d %d+%d\n", size, pkt_size, recv_payload_size);
+      ECALL(data_dump(x->buff, pkt_size + recv_payload_size));
 
       //uint8_t size;
       //ECALL(rsx_pkt_get_rtn_size(x->spkt, &size));
@@ -127,6 +129,25 @@ errno_t rsx_spkt_mem_write (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t si
   return EOK;
 }
 
+errno_t rsx_spkt_mem_write_int16 (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+  EVALUE(NULL, rsx);
+
+  ECALL(rsx_pkt_reset(rsx->spkt)); /* TODO: */
+
+  RSX_SPKT_SETID(*(rsx->spkt), id);
+  RSX_SPKT_SETFLAG(*(rsx->spkt), RSX_SPKT_SND_FLG_DEFAULT & RSX_SPKT_RTN_FLG_RTNLESS);
+  RSX_SPKT_SETADDR(*(rsx->spkt), start_addr);
+  RSX_SPKT_SETLENGTH(*(rsx->spkt), size * sizeof(int16_t));
+
+  for (size_t i = 0; i < size; i += sizeof(int16_t)) {
+    RSX_SPKT_SET_INT16(*(rsx->lpkt), i, data[i]);
+  }
+
+  ECALL(rsx_spkt_write(rsx));
+
+  return EOK;
+}
+
 errno_t rsx_spkt_mem_read (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
   EVALUE(NULL, rsx);
 
@@ -141,6 +162,25 @@ errno_t rsx_spkt_mem_read (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t siz
 
   for (size_t i = 0; i < size; i++) {
     data[i] = RSX_SPKT_GET_U8(*(rsx->spkt), i);
+  }
+
+  return EOK;
+}
+
+errno_t rsx_spkt_mem_read_int16 (rsx *rsx, uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
+  EVALUE(NULL, rsx);
+
+  ECALL(rsx_pkt_reset(rsx->spkt));
+
+  RSX_SPKT_SETID(*(rsx->spkt), id);
+  RSX_SPKT_SETFLAG(*(rsx->spkt), RSX_SPKT_SND_FLG_DEFAULT | RSX_SPKT_RTN_FLG_ADDR);
+  RSX_SPKT_SETADDR(*(rsx->spkt), start_addr);
+  RSX_SPKT_SETLENGTH(*(rsx->spkt), size * sizeof(int16_t));
+
+  ECALL(rsx_spkt_write_read(rsx));
+
+  for (size_t i = 0; i < size; i += sizeof(int16_t)) {
+    data[i] = RSX_SPKT_GET_INT16(*(rsx->spkt), i);
   }
 
   return EOK;
@@ -174,10 +214,10 @@ static errno_t _rsx_lpkt_mem_write_int16 (rsx *rsx, uint8_t id[/*num*/], uint8_t
   EVALUE(NULL, rsx);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
-  RSX_LPKT_SETLENGTH(*(rsx->lpkt), size);
+  RSX_LPKT_SETLENGTH(*(rsx->lpkt), size * sizeof(int16_t));
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
-    for (size_t j = 0; j < size; j += 2) {
+    for (size_t j = 0; j < size; j += sizeof(int16_t)) {
       RSX_LPKT_SET_INT16(*(rsx->lpkt), i, j, data[i][j]);
     }
   }
@@ -212,10 +252,10 @@ errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num
   EVALUE(NULL, rsx);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
-  RSX_LPKT_SETLENGTH(*(rsx->lpkt), size);
+  RSX_LPKT_SETLENGTH(*(rsx->lpkt), size * sizeof(int16_t));
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
-    for (size_t j = 0; j < size; j += 2) {
+    for (size_t j = 0; j < size; j += sizeof(int16_t)) {
       RSX_LPKT_SET_INT16(*(rsx->lpkt), i, j, data[j]);
     }
   }

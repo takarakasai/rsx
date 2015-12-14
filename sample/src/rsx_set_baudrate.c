@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
   hr_serial hrs;
   ECALL(hr_serial_init(&hrs));
   use_serial = true;
-  ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
+  ECALL(hr_serial_open(&hrs, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
 
   run_test(argc, argv, &hrs, use_serial, servo_id, val);
 

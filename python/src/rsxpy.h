@@ -8,7 +8,6 @@
 
 #define kRSXPY_NUM_OF_JOINTS 20
 #define kRSXPY_MAX_PKT_SIZE  1024
-
 namespace bp = boost::python;
 
 class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
@@ -50,15 +49,49 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     return EOK;
   }
 
-  errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, bp::list &in_data) {
-    const uint8_t size = len(in_data);
-    uint8_t data[size];
+  errno_t spkt_mem_write_int16 (uint8_t id, uint8_t start_addr, bp::list &in_data) {
+    GET_C_ARRAY(int16_t, size, data/*[size]*/, in_data);
 
-    ECALL(base::spkt_mem_read(id, start_addr, size, data));
-
-    SET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
-
+    ECALL(base::spkt_mem_write_int16(id, start_addr, size, data));
     return EOK;
+  }
+
+  //errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, bp::list &in_data) {
+  bp::list spkt_mem_read (uint8_t id, uint8_t start_addr, size_t num) {
+    uint8_t data[num];
+    //const uint8_t size = len(in_data);
+    //uint8_t data[size];
+
+    //ECALL(base::spkt_mem_read(id, start_addr, size, data));
+    errno_t eno = base::spkt_mem_read(id, start_addr, num, data);
+    if (eno != EOK) {
+      throw eno;
+    }
+
+    boost::python::list plist;
+    for (size_t i = 0; i < num; i++) {
+      plist.append(data[i]);
+    }
+
+    //SET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
+
+    return plist;
+  }
+
+  bp::list spkt_mem_read_int16 (uint8_t id, uint8_t start_addr, size_t num/* num * int16_t */) {
+    int16_t data[num];
+
+    errno_t eno = base::spkt_mem_read_int16(id, start_addr, num, data);
+    if (eno != EOK) {
+      throw eno;
+    }
+
+    boost::python::list plist;
+    for (size_t i = 0; i < num; i++) {
+      plist.append(data[i]);
+    }
+
+    return plist;
   }
 
   errno_t lpkt_mem_write (bp::list &in_id, uint8_t start_addr, size_t size, bp::list &in_data) {
@@ -96,6 +129,7 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
  protected:
 
  private: 
+  bp::list rdata;
 };
 
 #endif

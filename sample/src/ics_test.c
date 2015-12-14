@@ -7,8 +7,10 @@
 #include <string.h>
 
 #include "rsx.h"
+#include "ics.h"
 #include "mmap/rs30x.h"
 
+/*
 static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
   EVALUE(NULL, servo);
 
@@ -33,26 +35,17 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
 
   return 0;
 }
+*/
 
 int main(int argc, char *argv[]) {
   RSX_DECL(servo, 20, 1024);
   RSX_INIT(servo);
 
   bool use_serial = false;
-  uint8_t servo_state = RSX_DATA_SERVO_OFF;
 
-  if (argc >= 4) {
+  if (argc >= 3) {
     use_serial = true;
     ECALL(rsx_open(&servo, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
-
-    if (strcmp(argv[3], "ON") == 0) {
-      servo_state = RSX_DATA_SERVO_ON;
-    } else if (strcmp(argv[3], "BRK" ) == 0) {
-      servo_state = RSX_DATA_SERVO_BRK;
-    } else {
-      servo_state = RSX_DATA_SERVO_OFF;
-    }
-
   } else {
     use_serial = true;
     ECALL(rsx_open(&servo, "ttyUSB", "0", HR_B460800, HR_PAR_NONE));
@@ -60,7 +53,8 @@ int main(int argc, char *argv[]) {
 
   ECALL(rsx_set_serial(&servo, use_serial));
 
-  run_test(argc, argv, &servo, servo_state);
+  ics_test(&servo);
+  //run_test(argc, argv, &servo, servo_state);
 
   ECALL(rsx_close(&servo));
 
