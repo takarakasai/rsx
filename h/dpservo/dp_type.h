@@ -1,8 +1,6 @@
 
-#ifndef RSX_TYPE_H
-#define RSX_TYPE_H
-
-#if 0
+#ifndef DP_TYPE_H
+#define DP_TYPE_H
 
 #include <errno.h>
 
@@ -15,14 +13,15 @@
 /* for bool */
 #include <stdbool.h>
 
+typedef float  float32_t;
+typedef double float64_t;
+
 #define EOK 0
 
 typedef int errno_t;
 typedef char char8_t;
 
 static const errno_t eok = EOK;
-
-#endif
 
 #endif
 

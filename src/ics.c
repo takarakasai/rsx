@@ -4,6 +4,20 @@
 
 #include <unistd.h>
 
+typedef struct {
+  hr_serial *hrs;
+  uint8_t *buff;//[/*max_size*/];
+  size_t max_size;
+
+  size_t retry_count;
+
+  //rsx_pkt *lpkt;
+  //rsx_pkt *spkt;
+
+  /* debug */
+  bool use_serial;
+} ics;
+
 /*
  * position:
  * TX : CMD POSH POSL
@@ -13,7 +27,8 @@
  *          SERVOID  |  CMD = 100xxxx (xxxx:servoid)
 */
 
-errno_t ics_ser_set_pos_cmd (rsx *x, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size) {
+//errno_t ics_ser_set_pos_cmd (rsx *x, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size) {
+errno_t ics_ser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size) {
   EVALUE(NULL, data);
   EVALUE(NULL, serialized_size);
 
@@ -26,24 +41,30 @@ errno_t ics_ser_set_pos_cmd (rsx *x, uint8_t id, uint8_t cmdid, uint16_t pos, ui
 
   *serialized_size = idx;
 
-  //write(STDOUT_FILENO, (void*)data, *serialized_size);
-  for (size_t i = 0; i < *serialized_size; i++) {
-    printf(" %02x", data[i]);
-  }
-  printf("\n");
-  ECALL(hr_serial_write(x->hrs, data, *serialized_size));
+  //for (size_t i = 0; i < *serialized_size; i++) {
+  //  printf(" %02x", data[i]);
+  //}
+  //printf("\n");
+  //ECALL(hr_serial_write(x->hrs, data, *serialized_size));
 
   return EOK;
 }
+
+#define ICS_POS_CMD_REQ_PKT_SIZE 3 /* [byte] */
+#define ICS_POS_CMD_REP_PKT_SIZE 3 /* [byte] */
 
 errno_t ics_deser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, uint8_t size, uint8_t data[/*size*/], ICS_UART_RATE baudrate) {
   EVALUE(NULL, curpos);
   EVALUE(NULL, data);
 
-  //TODO: size check
+  // size check
+  if (size < ICS_POS_CMD_REP_PKT_SIZE) {
+    return EINVAL;
+  }
 
-  /* loop back data */
   size_t idx = 0;
+#if 0
+  /* loop back data */
   if (data[idx++] != ICS_SER_REQ_CMD(id, cmdid)) {
     return EILSEQ;
   }
@@ -52,6 +73,7 @@ errno_t ics_deser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t refpos, uint1
     return EILSEQ;
   }
   idx += 2;
+#endif
 
   /* reply data */
   if (data[idx++] != ICS_SER_REP_CMD(id, cmdid, baudrate)) {
@@ -59,6 +81,39 @@ errno_t ics_deser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t refpos, uint1
   }
 
   *curpos = ICS_GET_POS(data[idx], data[idx + 1]);
+
+  return EOK;
+}
+
+errno_t ics_write_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos) {
+  EVALUE(NULL, ics);
+
+  size_t size;
+  ECALL(ics_ser_set_pos_cmd(id, cmdid, pos, ics->max_size, ics->buff, &size));
+
+  for (size_t i = 0; i < size; i++) {
+    printf(" %02x", ics->buff[i]);
+  }
+  printf("\n");
+  ECALL(hr_serial_write(ics->hrs, ics->buff, size));
+
+  return EOK;
+}
+
+errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos) {
+  EVALUE(NULL, ics);
+
+  size_t size;
+  ECALL(ics_ser_set_pos_cmd(id, cmdid, pos, ics->max_size, ics->buff, &size));
+
+  ECALL(hr_serial_write(ics->hrs, ics->buff, size));
+
+  ECALL(hr_serial_read(ics->hrs, ics->buff, size));
+
+  for (size_t i = 0; i < size; i++) {
+    printf(" %02x", ics->buff[i]);
+  }
+  printf("\n");
 
   return EOK;
 }
@@ -135,18 +190,18 @@ int ics_test(rsx *rsx) {
   //
   const uint8_t id = 1;
 
-  ics_ser_set_pos_cmd (rsx, id, ICS_CMD_REQ_POS, 6000, 100, data, &size);
+  ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 6000, 100, data, &size);
   usleep(1000 * 1000);
 
-  ics_ser_set_pos_cmd (rsx, id, ICS_CMD_REQ_POS, 7500, 100, data, &size);
+  ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 7500, 100, data, &size);
 
   usleep(1000 * 1000);
   
-  ics_ser_set_pos_cmd (rsx, id, ICS_CMD_REQ_POS, 6000, 100, data, &size);
+  ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 6000, 100, data, &size);
 
   usleep(1000 * 1000);
 
-  ics_ser_set_pos_cmd (rsx, id, ICS_CMD_REQ_POS, 7500, 100, data, &size);
+  ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 7500, 100, data, &size);
 
   usleep(1000 * 1000);
 
@@ -157,7 +212,7 @@ int ics_test(rsx *rsx) {
 //  }
 
   for (size_t i = 0; i < 10; i++) {
-    ics_ser_set_pos_cmd (rsx, id, ICS_CMD_REQ_POS, 0, 100, data, &size);
+    ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 0, 100, data, &size);
     usleep(100 * 1000);
   }
 

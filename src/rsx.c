@@ -5,80 +5,58 @@
 
 #include "serial/hr_serial.h"
 
-errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt, hr_serial *hrs, uint8_t buff[/*max_size*/], size_t max_size) {
+errno_t rsx_open (rsx *rsx, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity){
   EVALUE(NULL, rsx);
-  EVALUE(NULL, lpkt);
-  EVALUE(NULL, spkt);
-  EVALUE(NULL, hrs);
-  EVALUE(NULL, buff);
-
-  ECALL(hr_serial_init(hrs));
-
-  rsx->lpkt = lpkt;
-  rsx->spkt = spkt;
-  rsx->hrs = hrs;
-  rsx->buff = buff;
-  rsx->max_size = max_size;
-
-  rsx->retry_count = 5;
-
-  rsx->use_serial = true;
-
+  if (rsx->base.io_enabled) ECALL(hr_serial_open(rsx->base.hrs, device, port, baudrate, parity));
   return EOK;
 }
 
-errno_t rsx_open (rsx *x, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity){
-  EVALUE(NULL, x);
-  if (x->use_serial) ECALL(hr_serial_open(x->hrs, device, port, baudrate, parity));
+errno_t rsx_close (rsx *rsx) {
+  EVALUE(NULL, rsx);
+  if (rsx->base.io_enabled) ECALL(hr_serial_close(rsx->base.hrs));
   return EOK;
 }
 
-errno_t rsx_close (rsx *x) {
-  EVALUE(NULL, x);
-  if (x->use_serial) ECALL(hr_serial_close(x->hrs));
-  return EOK;
-}
-
-errno_t rsx_spkt_write (rsx *x) {
-  EVALUE(NULL, x);
+errno_t rsx_spkt_write (rsx *rsx) {
+  EVALUE(NULL, rsx);
 
   errno_t eno = EOK;
 
   size_t pkt_size;
-  ECALL(rsx_pkt_ser(x->spkt, x->buff, x->max_size, &pkt_size));
+  ECALL(rsx_pkt_ser(rsx->spkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
 
-  ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
+  ECALL(hr_serial_write(rsx->base.hrs, rsx->base.buff, pkt_size));
 
   return eno;
 }
 
-errno_t rsx_spkt_write_read (rsx *x) {
-  EVALUE(NULL, x);
+errno_t rsx_spkt_write_read (rsx *rsx) {
+  EVALUE(NULL, rsx);
 
   errno_t eno = EOK;
 
   size_t pkt_size;
-  ECALL(rsx_pkt_ser(x->spkt, x->buff, x->max_size, &pkt_size));
+  ECALL(rsx_pkt_ser(rsx->spkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
 
-  if (x->use_serial) {
-    for (size_t cnt = 0; cnt < x->retry_count; cnt++) {
-      ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
-      ECALL(data_dump(x->buff, pkt_size));
+  if (rsx->base.io_enabled) {
+    for (size_t cnt = 0; cnt < rsx->retry_count; cnt++) {
+      ECALL(hr_serial_write(rsx->base.hrs, rsx->base.buff, pkt_size));
+      ECALL(data_dump(rsx->base.buff, pkt_size));
 
       //usleep(10 * 1000);
-      const size_t recv_payload_size = RSX_SPKT_GETLENGTH(*(x->spkt));
-      errno_t eno = hr_serial_read(x->hrs, x->buff, pkt_size + recv_payload_size);
+      const size_t recv_payload_size = RSX_SPKT_GETLENGTH(*(rsx->spkt));
+      errno_t eno = hr_serial_read(rsx->base.hrs, rsx->base.buff, pkt_size + recv_payload_size);
       //printf("------> %d %d+%d\n", size, pkt_size, recv_payload_size);
-      ECALL(data_dump(x->buff, pkt_size + recv_payload_size));
+      ECALL(data_dump(rsx->base.buff, pkt_size + recv_payload_size));
 
       //uint8_t size;
-      //ECALL(rsx_pkt_get_rtn_size(x->spkt, &size));
-      //errno_t eno = hr_serial_read(x->hrs, x->buff, size);
+      //ECALL(rsx_pkt_get_rtn_size(rsx->spkt, &size));
+      //errno_t eno = hr_serial_read(rsx->base.hrs, rsx->base.buff, size);
       if (eno == EOK) {
-        ECALL(rsx_pkt_deser(x->spkt, x->buff, x->max_size, &pkt_size));
+        ECALL(rsx_pkt_deser(rsx->spkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
         break;
       } else {
-        if (cnt == x->retry_count - 1) {
+        if (cnt == rsx->retry_count - 1) {
           eno = -1;
         }
         continue;
@@ -89,23 +67,24 @@ errno_t rsx_spkt_write_read (rsx *x) {
   return eno;
 }
 
-errno_t rsx_lpkt_write (rsx *x) {
-  EVALUE(NULL, x);
+errno_t rsx_lpkt_write (rsx *rsx) {
+  EVALUE(NULL, rsx);
 
   size_t pkt_size;
-  ECALL(rsx_pkt_ser(x->lpkt, x->buff, x->max_size, &pkt_size));
+  ECALL(rsx_pkt_ser(rsx->lpkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
+  printf("===============================> %zd\n", pkt_size);
 
-  ECALL(data_dump(x->buff, pkt_size));
+  ECALL(data_dump(rsx->base.buff, pkt_size));
 
-  if(x->use_serial) ECALL(hr_serial_write(x->hrs, x->buff, pkt_size));
+  if(rsx->base.io_enabled) ECALL(hr_serial_write(rsx->base.hrs, rsx->base.buff, pkt_size));
 
   return EOK;
 }
 
-errno_t rsx_set_serial (rsx *x, bool use_serial) {
-  EVALUE(NULL, x);
+errno_t rsx_set_serial (rsx *rsx, bool io_enabled) {
+  EVALUE(NULL, rsx);
 
-  x->use_serial = use_serial;
+  rsx->base.io_enabled = io_enabled;
 
   return EOK;
 }
@@ -192,6 +171,7 @@ static errno_t _rsx_lpkt_mem_write (rsx *rsx, uint8_t id[/*num*/], uint8_t num, 
   EVALUE(NULL, data);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
+  RSX_LPKT_SETCOUNT(*(rsx->lpkt), num);
   RSX_LPKT_SETLENGTH(*(rsx->lpkt), size);
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
@@ -214,6 +194,7 @@ static errno_t _rsx_lpkt_mem_write_int16 (rsx *rsx, uint8_t id[/*num*/], uint8_t
   EVALUE(NULL, rsx);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
+  RSX_LPKT_SETCOUNT(*(rsx->lpkt), num);
   RSX_LPKT_SETLENGTH(*(rsx->lpkt), size * sizeof(int16_t));
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
@@ -236,6 +217,7 @@ errno_t rsx_lpkt_mem_write_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint
   EVALUE(NULL, rsx);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
+  RSX_LPKT_SETCOUNT(*(rsx->lpkt), num);
   RSX_LPKT_SETLENGTH(*(rsx->lpkt), size);
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
@@ -252,6 +234,7 @@ errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num
   EVALUE(NULL, rsx);
 
   RSX_LPKT_SETADDR(*(rsx->lpkt), start_addr);
+  RSX_LPKT_SETCOUNT(*(rsx->lpkt), num);
   RSX_LPKT_SETLENGTH(*(rsx->lpkt), size * sizeof(int16_t));
   for (size_t i = 0; i < num; i++) {
     RSX_LPKT_SETVID(*(rsx->lpkt), i, id[i]);
@@ -262,5 +245,108 @@ errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num
   ECALL(rsx_lpkt_write(rsx));
 
   return 0;
+}
+
+static inline errno_t servo_state_dps2rsx (dps_servo_state istate, uint8_t *ostate) {
+  EVALUE(NULL, ostate);
+  switch (istate) {
+    case kDpsServoOff : *ostate = RSX_DATA_SERVO_OFF; break;
+    case kDpsServoBrk : *ostate = RSX_DATA_SERVO_BRK; break;
+    case kDpsServoOn  : *ostate = RSX_DATA_SERVO_ON;  break;
+    default:
+      return EINVAL;
+  }
+  return EOK;
+}
+
+// TODO:
+#include "mmap/rs30x.h"
+
+static errno_t set_state (dpservo *dps, uint8_t id, dps_servo_state state) {
+  EVALUE(NULL, dps);
+  uint8_t servo_state;
+  ECALL(servo_state_dps2rsx(state, &servo_state));
+  ECALL(rsx_spkt_mem_write((rsx*)dps, id, RSX_RAM_TRQ_ENABLE, 1, ((uint8_t[]){servo_state})));
+  return EOK;
+}
+
+static errno_t set_state_all (dpservo *dps, dps_servo_state state) {
+  EVALUE(NULL, dps);
+  uint8_t servo_state;
+  ECALL(servo_state_dps2rsx(state, &servo_state));
+  ECALL(rsx_lpkt_mem_write_all((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_TRQ_ENABLE, 1, ((uint8_t[]){servo_state})));
+  return EOK;
+}
+
+static errno_t set_goal (dpservo *dps, uint8_t id, float64_t goal) {
+  EVALUE(NULL, dps);
+  int16_t ogoal = (int16_t)(goal * 10);
+  ECALL(rsx_spkt_mem_write_int16((rsx*)dps, id, RSX_RAM_GOAL_POS_L, 1, ((int16_t[]){ogoal})));
+  return EOK;
+}
+
+static errno_t set_goal_all (dpservo *dps, size_t num, float64_t goal[/*num*/]) {
+  EVALUE(NULL, dps);
+  if (num != dps->num_of_servo) {
+    return EINVAL;
+  }
+  int16_t ogoal[dps->num_of_servo];
+  for (size_t i = 0; i < num; i++) {
+    ogoal[i] = (int16_t)(goal[i] * 10);
+  }
+  ECALL(rsx_lpkt_mem_write_int16_all((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
+  return EOK;
+}
+
+static errno_t write_mem (dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+  EVALUE(NULL, dps);
+  ECALL(rsx_spkt_mem_write((rsx*)dps, id, start_addr, size, data));
+  return EOK;
+}
+
+static errno_t read_mem (dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+  EVALUE(NULL, dps);
+  ECALL(rsx_spkt_mem_read((rsx*)dps, id, start_addr, size, data));
+  return EOK;
+}
+
+//errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt, hr_serial *hrs, uint8_t buff[/*max_size*/], size_t max_size) {
+errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, lpkt);
+  EVALUE(NULL, spkt);
+  /*
+  EVALUE(NULL, hrs);
+  EVALUE(NULL, buff);
+  EVALUE(NULL, ops);
+  */
+
+  dpservo *dps = get_dpservo(rsx);
+
+  /*
+  ECALL(hr_serial_init(hrs));
+
+  rsx->hrs = hrs;
+  rsx->buff = buff;
+  rsx->max_size = max_size;
+
+  rsx->retry_count = 5;
+
+  rsx->use_serial = true;
+  */
+
+  dps->ops.set_state     = set_state;
+  dps->ops.set_state_all = set_state_all;
+  dps->ops.set_goal      = set_goal;
+  dps->ops.set_goal_all  = set_goal_all;
+  dps->ops.write_mem     = write_mem;
+  dps->ops.read_mem      = read_mem;
+
+  rsx->retry_count = 5;
+
+  rsx->lpkt = lpkt;
+  rsx->spkt = spkt;
+
+  return EOK;
 }
 

@@ -114,6 +114,7 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
     GET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
 
+    printf("============> %d %d\n", num, size);
     ECALL(base::lpkt_mem_write_all(id, num, start_addr, size, data));
     return EOK;
   }

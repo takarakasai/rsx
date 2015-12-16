@@ -40,7 +40,8 @@ typedef enum {
 #define ICS_SER_POS_H(pos) (0x7F & (pos >> 7))
 #define ICS_GET_POS(datah, datal)  ((((uint16_t)datah) << 7) | datal)
 
-errno_t ics_ser_set_pos_cmd (rsx *rsx, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
+//errno_t ics_ser_set_pos_cmd (rsx *rsx, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
+errno_t ics_ser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
 errno_t ics_deser_set_pos_cmd (uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, uint8_t size, uint8_t data[/*size*/], ICS_UART_RATE baudrate);
 errno_t ics_ser_get_param_cmd (uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
 errno_t ics_deser_get_param_cmd (uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t size, uint8_t data[/*max_size*/], uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);

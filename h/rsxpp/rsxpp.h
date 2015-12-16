@@ -16,8 +16,9 @@ namespace dp {
   {
    public:
     rsxpp(void) {
-      RSX_INIT(servo_inst);
-      servo = &servo_inst;
+      DPSERVO_INIT(servo_inst, RSX_INIT);
+      //RSX_INIT(servo_inst);
+      servo = (rsx*)(&servo_inst);
     }
 
     ~rsxpp(void) {
@@ -83,6 +84,7 @@ namespace dp {
     }
 
     errno_t lpkt_mem_write_all (uint8_t id[/*num*/], uint8_t num , uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
+      printf("==============> %d %d\n", num, size);
       ECALL(rsx_lpkt_mem_write_all(servo, id, num, start_addr, size, data));
       return EOK;
     }
@@ -98,7 +100,9 @@ namespace dp {
     }
  
    protected: 
-    RSX_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE);
+    DPSERVO_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE, RSX_DECL);
+    //RSX_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE);
+    //dpservo *servo;
     rsx *servo;
    private:
   };

@@ -21,6 +21,7 @@ if(${HR_SERIAL_LATENCY_CHECK_DETAIL})
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
+include_directories(${PROJECT_SOURCE_DIR}/h/dpservo)
 
 file(GLOB SRCS "src/*.c")
 file(GLOB SERIAL_SRCS "src/serial/*.c")

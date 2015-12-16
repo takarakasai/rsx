@@ -38,25 +38,29 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
 */
 
 int main(int argc, char *argv[]) {
-  RSX_DECL(servo, 20, 1024);
-  RSX_INIT(servo);
+  DPSERVO_DECL(servo, 20, 1024, RSX_DECL);
+  DPSERVO_INIT(servo, RSX_INIT);
+  //RSX_DECL(servo, 20, 1024);
+  //RSX_INIT(servo);
+  
+  rsx *x = (rsx*)(&servo);
 
   bool use_serial = false;
 
   if (argc >= 3) {
     use_serial = true;
-    ECALL(rsx_open(&servo, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
+    ECALL(rsx_open(x, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
   } else {
     use_serial = true;
-    ECALL(rsx_open(&servo, "ttyUSB", "0", HR_B460800, HR_PAR_NONE));
+    ECALL(rsx_open(x, "ttyUSB", "0", HR_B460800, HR_PAR_NONE));
   }
 
-  ECALL(rsx_set_serial(&servo, use_serial));
+  ECALL(rsx_set_serial(x, use_serial));
 
-  ics_test(&servo);
+  ics_test(x);
   //run_test(argc, argv, &servo, servo_state);
 
-  ECALL(rsx_close(&servo));
+  ECALL(rsx_close(x));
 
   return 0;
 }
