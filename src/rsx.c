@@ -72,7 +72,6 @@ errno_t rsx_lpkt_write (rsx *rsx) {
 
   size_t pkt_size;
   ECALL(rsx_pkt_ser(rsx->lpkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
-  printf("===============================> %zd\n", pkt_size);
 
   ECALL(data_dump(rsx->base.buff, pkt_size));
 
@@ -262,7 +261,7 @@ static inline errno_t servo_state_dps2rsx (dps_servo_state istate, uint8_t *osta
 // TODO:
 #include "mmap/rs30x.h"
 
-static errno_t set_state (dpservo *dps, uint8_t id, dps_servo_state state) {
+errno_t set_state (dpservo *dps, uint8_t id, dps_servo_state state) {
   EVALUE(NULL, dps);
   uint8_t servo_state;
   ECALL(servo_state_dps2rsx(state, &servo_state));
@@ -270,7 +269,7 @@ static errno_t set_state (dpservo *dps, uint8_t id, dps_servo_state state) {
   return EOK;
 }
 
-static errno_t set_state_all (dpservo *dps, dps_servo_state state) {
+errno_t set_states (dpservo *dps, dps_servo_state state) {
   EVALUE(NULL, dps);
   uint8_t servo_state;
   ECALL(servo_state_dps2rsx(state, &servo_state));
@@ -278,23 +277,24 @@ static errno_t set_state_all (dpservo *dps, dps_servo_state state) {
   return EOK;
 }
 
-static errno_t set_goal (dpservo *dps, uint8_t id, float64_t goal) {
+errno_t set_goal (dpservo *dps, uint8_t id, float64_t goal) {
   EVALUE(NULL, dps);
   int16_t ogoal = (int16_t)(goal * 10);
   ECALL(rsx_spkt_mem_write_int16((rsx*)dps, id, RSX_RAM_GOAL_POS_L, 1, ((int16_t[]){ogoal})));
   return EOK;
 }
 
-static errno_t set_goal_all (dpservo *dps, size_t num, float64_t goal[/*num*/]) {
+errno_t set_goals (dpservo *dps, size_t num, float64_t goal[/*num*/]) {
   EVALUE(NULL, dps);
   if (num != dps->num_of_servo) {
     return EINVAL;
   }
-  int16_t ogoal[dps->num_of_servo];
+  int16_t ogoal[dps->num_of_servo][1];
   for (size_t i = 0; i < num; i++) {
-    ogoal[i] = (int16_t)(goal[i] * 10);
+    ogoal[i][0] = (int16_t)(goal[i] * 10);
   }
-  ECALL(rsx_lpkt_mem_write_int16_all((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
+  //ECALL(rsx_lpkt_mem_write_int16((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
+  ECALL(_rsx_lpkt_mem_write_int16((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
   return EOK;
 }
 
@@ -310,37 +310,13 @@ static errno_t read_mem (dpservo *dps, const uint8_t id, uint8_t start_addr, siz
   return EOK;
 }
 
-//errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt, hr_serial *hrs, uint8_t buff[/*max_size*/], size_t max_size) {
 errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt) {
   EVALUE(NULL, rsx);
   EVALUE(NULL, lpkt);
   EVALUE(NULL, spkt);
-  /*
-  EVALUE(NULL, hrs);
-  EVALUE(NULL, buff);
-  EVALUE(NULL, ops);
-  */
 
   dpservo *dps = get_dpservo(rsx);
-
-  /*
-  ECALL(hr_serial_init(hrs));
-
-  rsx->hrs = hrs;
-  rsx->buff = buff;
-  rsx->max_size = max_size;
-
-  rsx->retry_count = 5;
-
-  rsx->use_serial = true;
-  */
-
-  dps->ops.set_state     = set_state;
-  dps->ops.set_state_all = set_state_all;
-  dps->ops.set_goal      = set_goal;
-  dps->ops.set_goal_all  = set_goal_all;
-  dps->ops.write_mem     = write_mem;
-  dps->ops.read_mem      = read_mem;
+  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, write_mem, read_mem));
 
   rsx->retry_count = 5;
 

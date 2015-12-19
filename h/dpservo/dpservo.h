@@ -30,20 +30,48 @@ typedef enum {
 typedef struct dpservo_struct dpservo;
 
 typedef errno_t (*dps_set_state_op)(dpservo *dps, const uint8_t id, dps_servo_state state);
-typedef errno_t (*dps_set_state_all_op)(dpservo *dps, dps_servo_state state);
+typedef errno_t (*dps_set_states_op)(dpservo *dps, dps_servo_state state);
 typedef errno_t (*dps_set_goal_op)(dpservo *dps, const uint8_t id, float64_t goal);
-typedef errno_t (*dps_set_goal_all_op)(dpservo *dps, const size_t num, float64_t goal[/*num*/]);
+typedef errno_t (*dps_set_goals_op)(dpservo *dps, const size_t num, float64_t goal[/*num*/]);
 typedef errno_t (*dps_write_mem_op)(dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]);
 typedef errno_t (*dps_read_mem_op)(dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]);
 
 typedef struct {
   dps_set_state_op set_state;
-  dps_set_state_all_op set_state_all;
+  dps_set_states_op set_states;
   dps_set_goal_op set_goal;
-  dps_set_goal_all_op set_goal_all;
+  dps_set_goals_op set_goals;
   dps_write_mem_op write_mem;
   dps_read_mem_op read_mem;
 } dpservo_ops;
+
+inline errno_t dpservo_ops_init (
+        dpservo_ops *ops,
+        dps_set_state_op set_state,
+        dps_set_states_op set_states,
+        dps_set_goal_op set_goal,
+        dps_set_goals_op set_goals,
+        dps_write_mem_op write_mem,
+        dps_read_mem_op read_mem)
+{
+    EVALUE(NULL, ops);
+
+    EVALUE(NULL, set_state);
+    EVALUE(NULL, set_states);
+    EVALUE(NULL, set_goal);
+    EVALUE(NULL, set_goals);
+    EVALUE(NULL, write_mem);
+    EVALUE(NULL, read_mem);
+
+    ops->set_state  = set_state;
+    ops->set_states = set_states;
+    ops->set_goal   = set_goal;
+    ops->set_goals  = set_goals;
+    ops->write_mem  = write_mem;
+    ops->read_mem   = read_mem;
+
+    return EOK;
+}
 
 typedef struct dpservo_struct {
   hr_serial *hrs;
@@ -89,9 +117,9 @@ static inline errno_t dps_set_state (dpservo *dps, const uint8_t id, dps_servo_s
   return EOK;
 }
 
-static inline errno_t dps_set_state_all (dpservo *dps, dps_servo_state state) {
+static inline errno_t dps_set_states (dpservo *dps, dps_servo_state state) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.set_state_all(dps, state));
+  ECALL(dps->ops.set_states(dps, state));
   return EOK;
 }
 
@@ -101,9 +129,9 @@ static inline errno_t dps_set_goal (dpservo *dps, const uint8_t id, float64_t go
   return EOK;
 }
 
-static inline errno_t dps_set_goal_all (dpservo *dps, const size_t num, float64_t goal[/*num*/]) {
+static inline errno_t dps_set_goals (dpservo *dps, const size_t num, float64_t goal[/*num*/]) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.set_goal_all(dps, num, goal));
+  ECALL(dps->ops.set_goals(dps, num, goal));
   return EOK;
 }
 
