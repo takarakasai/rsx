@@ -6,12 +6,6 @@
 
 #include "hr_unixio.h"
 
-typedef struct {
-  int fd;
-  struct termios prev_term;
-  struct termios term;
-} hr_serial;
-
 typedef enum {
   HR_PAR_NONE,
   HR_PAR_EVEN,
@@ -29,6 +23,16 @@ typedef enum {
   HR_B576000 ,
   HR_B1152000
 } hr_baudrate;
+
+typedef struct {
+  int fd;
+
+  //hr_parity   parity;
+  hr_baudrate baudrate;
+
+  struct termios prev_term;
+  struct termios term;
+} hr_serial;
 
 errno_t hr_serial_init (hr_serial *ser);
 errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_baudrate baudrate, hr_parity parity);

@@ -10,16 +10,17 @@
 #include "serial/hr_serial.h"
 
 #define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
-  PROTOCOL_DECL_MACRO(name, num_of_servo);                    \
-  hr_serial name ## _hrs;                                     \
-  uint8_t name ## _buff [max_data_size];                      \
+  PROTOCOL_DECL_MACRO(name ## _child, num_of_servo);                         \
+  hr_serial name ## _hrs;                                                    \
+  uint8_t name ## _buff [max_data_size];                                     \
+  dpservo *name;
 
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)         \
-  PROTOCOL_INIT_MACRO(name);                            \
   dpservo_init(                                         \
-   get_dpservo(&name), &(name ## _hrs),                 \
+   get_dpservo(&name ## _child), &(name ## _hrs),       \
    sizeof(name ## _buff) / sizeof(name ## _buff[0]),    \
-   (name ## _buff))
+   (name ## _buff), &(name));                           \
+  PROTOCOL_INIT_MACRO(name ## _child)
 
 typedef enum {
   kDpsServoOff,
@@ -93,10 +94,11 @@ static inline dpservo* get_dpservo(void* child) {
   return (dpservo*)child;
 }
 
-static inline errno_t dpservo_init (dpservo *dps, hr_serial *hrs, size_t max_size, uint8_t buff[/*max_size*/]) {
+static inline errno_t dpservo_init (dpservo *dps, hr_serial *hrs, size_t max_size, uint8_t buff[/*max_size*/], dpservo **p_dps) {
   EVALUE(NULL, dps);
   EVALUE(NULL, hrs);
   EVALUE(NULL, buff);
+  EVALUE(NULL, p_dps);
 
   ECALL(hr_serial_init(hrs));
 
@@ -108,6 +110,26 @@ static inline errno_t dpservo_init (dpservo *dps, hr_serial *hrs, size_t max_siz
 
   dps->io_enabled = true;
 
+  *p_dps = dps;
+
+  return EOK;
+}
+
+static inline errno_t dps_open (dpservo *dps, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity) {
+  EVALUE(NULL, dps);
+  if (dps->io_enabled) ECALL(hr_serial_open(dps->hrs, device, port, baudrate, parity));
+  return EOK;
+}
+
+static inline errno_t dps_close (dpservo *dps) {
+  EVALUE(NULL, dps);
+  if (dps->io_enabled) ECALL(hr_serial_close(dps->hrs));
+  return EOK;
+}
+
+static inline errno_t dps_set_serial (dpservo *dps, bool io_enabled) {
+  EVALUE(NULL, dps);
+  dps->io_enabled = io_enabled;
   return EOK;
 }
 

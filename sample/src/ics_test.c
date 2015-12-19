@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "rsx.h"
+//#include "rsx.h"
 #include "ics.h"
 #include "mmap/rs30x.h"
 
@@ -38,29 +38,29 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
 */
 
 int main(int argc, char *argv[]) {
-  DPSERVO_DECL(servo, 20, 1024, RSX_DECL);
-  DPSERVO_INIT(servo, RSX_INIT);
+  DPSERVO_DECL(servo, 20, 1024, ICS_DECL);
+  DPSERVO_INIT(servo, ICS_INIT);
   //RSX_DECL(servo, 20, 1024);
   //RSX_INIT(servo);
   
-  rsx *x = (rsx*)(&servo);
-
   bool use_serial = false;
 
   if (argc >= 3) {
     use_serial = true;
-    ECALL(rsx_open(x, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
+    //ECALL(dps_open(servo, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
+    ECALL(dps_open(servo, argv[1], argv[2], HR_B115200, HR_PAR_EVEN));
   } else {
     use_serial = true;
-    ECALL(rsx_open(x, "ttyUSB", "0", HR_B460800, HR_PAR_NONE));
+    ECALL(dps_open(servo, "ttyUSB", "0", HR_B1152000, HR_PAR_EVEN));
   }
 
-  ECALL(rsx_set_serial(x, use_serial));
+  ECALL(dps_set_serial(servo, use_serial));
 
+  ics *x = (ics*)(servo);
   ics_test(x);
-  //run_test(argc, argv, &servo, servo_state);
+  //run_test(argc, argv, servo, servo_state);
 
-  ECALL(rsx_close(x));
+  ECALL(dps_close(servo));
 
   return 0;
 }

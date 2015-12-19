@@ -128,6 +128,9 @@ errno_t hr_serial_init (hr_serial *ser) {
   EVALUE(NULL, ser);
 
   ser->fd = 0;
+
+  ser->baudrate = HR_B115200;
+
   memset(&(ser->prev_term), 0, sizeof(struct termios));
   memset(&(ser->term), 0, sizeof(struct termios));
 
@@ -138,6 +141,8 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_ba
   EVALUE(NULL, ser);
   EVALUE(NULL, dev);
   EVALUE(NULL, unit);
+
+  ser->baudrate = baudrate;
 
 #ifdef __unix
   const char *header = "/dev/";
