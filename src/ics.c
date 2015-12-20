@@ -19,7 +19,7 @@ errno_t ics_ser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos, 
   EVALUE(NULL, serialized_size);
 
   /* base class member */
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   //TODO: max_size check
 
@@ -46,7 +46,7 @@ errno_t ics_deser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t ref
   EVALUE(NULL, ics);
   EVALUE(NULL, curpos);
 
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   // size check
   //if (size < ICS_POS_CMD_REP_PKT_SIZE) {
@@ -79,7 +79,7 @@ errno_t ics_deser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t ref
 errno_t ics_write_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos) {
   EVALUE(NULL, ics);
 
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   size_t size;
   ECALL(ics_ser_set_pos_cmd(ics, id, cmdid, pos, &size));
@@ -92,7 +92,7 @@ errno_t ics_write_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos) {
 errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos) {
   EVALUE(NULL, ics);
 
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   ECALL(ics_write_pos(ics, id, cmdid, refpos));
   //ECALL(ics_ser_set_pos_cmd(id, cmdid, refpos, ics->max_size, ics->buff, &size));
@@ -113,7 +113,7 @@ errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmd
   //EVALUE(NULL, data);
   EVALUE(NULL, serialized_size);
 
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   //TODO: max_size check
 
@@ -131,7 +131,7 @@ errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t sc
   //EVALUE(NULL, data);
   //EVALUE(NULL, serialized_size);
 
-  dpservo *dps = get_dpservo(ics);
+  dpservo_base *dps = get_dpservo_base(ics);
 
   //TODO: size / max_size check
 
@@ -225,12 +225,94 @@ int ics_test(ics *ics) {
   return 0;
 }
 
+#define ICS_POS_MAX       (135.0) /* [deg] */
+#define ICS_POS_MIN      (-135.0) /* [deg] */
+                                /* ICS spec   |  DP spec   | decimal       */
+#define ICS_POS_MAX_HEX  0x2CEC /* 270[deg]  --> +135[deg] | 11500(0x2cec) */ /* 0x3FFF? */
+#define ICS_POS_MID_HEX  0x1D4C /* 135[deg]  -->    0[deg] |  7500(0x1d4c) */ /* 0x2000? */
+#define ICS_POS_MIN_HEX  0x0DAC /*   0[deg]  --> -135[deg] |  3500(0x0dac) */ /* 0x0001? */
+#define ICS_POS_FREE     0x0000 /* servo free              */
+
+#define ICS_POS2HEX(pos) ((pos) / ICS_POS_MAX * (ICS_POS_MAX_HEX - ICS_POS_MID_HEX) + ICS_POS_MID_HEX)
+#define ICS_HEX2POS(hex) (((hex) - ICS_POS_MID_HEX) * ICS_POS_MAX / (ICS_POS_MAX_HEX - ICS_POS_MID_HEX))
+
+static errno_t set_state (dpservo_base *dps, uint8_t id, dps_servo_state state) {
+  EVALUE(NULL, dps);
+  switch (state) {
+    case kDpsServoOff:
+      ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, ICS_POS_FREE, NULL));
+      break;
+    case kDpsServoBrk:
+    case kDpsServoOn:
+    {
+      uint16_t curpos;
+      ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, ICS_POS_FREE, &curpos));
+      ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, curpos, &curpos));
+    }
+      break;
+    default:
+      return EINVAL;
+      break;
+  }
+  return EOK;
+}
+
+static errno_t set_states (dpservo_base *dps, dps_servo_state state) {
+  EVALUE(NULL, dps);
+  for (size_t i = 0; i < dps->num_of_servo; i++) {
+    ECALL(set_state(dps, dps->servo_ids[i], state));
+  }
+  return EOK;
+}
+
+static errno_t set_goal (dpservo_base *dps, uint8_t id, float64_t goal) {
+  EVALUE(NULL, dps);
+  ELTGT(ICS_POS_MIN, ICS_POS_MAX, goal);
+
+  uint16_t ogoal = ICS_POS2HEX(goal);
+  ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, ogoal, NULL));
+
+  //uint16_t curpos;
+  //for (size_t i = 0; i < 100; i++) {
+  //  ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, 0x0000, &curpos));
+  //  printf("===>>> %d %04x %lf\n", ogoal, curpos, ICS_HEX2POS(curpos));
+  //  usleep(100 * 1000);
+  //}
+
+  return EOK;
+}
+
+static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]) {
+  EVALUE(NULL, dps);
+
+  for (size_t i = 0; i < dps->num_of_servo; i++) {
+    uint16_t iogoal = ICS_POS2HEX(goal[i]);
+    ECALL(ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
+    goal[i] = ICS_HEX2POS(iogoal);
+  }
+
+  return EOK;
+}
+
+static errno_t write_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+  EVALUE(NULL, dps);
+  fprintf(stderr, "%s:%s:%d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
+  //ECALL(rsx_spkt_mem_write((rsx*)dps, id, start_addr, size, data));
+  return EOK;
+}
+
+static errno_t read_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+  EVALUE(NULL, dps);
+  fprintf(stderr, "%s:%s:%d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
+  //ECALL(rsx_spkt_mem_read((rsx*)dps, id, start_addr, size, data));
+  return EOK;
+}
+
 errno_t ics_init (ics *ics) {
   EVALUE(NULL, ics);
 
-  // TODO:
-  //dpservo *dps = get_dpservo(ics);
-  //ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, write_mem, read_mem));
+  dpservo_base *dps = get_dpservo_base(ics);
+  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, write_mem, read_mem));
 
   ics->retry_count = 3;
 

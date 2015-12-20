@@ -1,0 +1,26 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+SPP_H	dpspp.h	3;"	d
+close	dpspp.h	/^    errno_t close (void) {$/;"	f	class:dp::srvpp
+dp	dpspp.h	/^namespace dp {$/;"	n
+lpkt_mem_write	dpspp.h	/^    errno_t lpkt_mem_write (uint8_t id[\/*num*\/], uint8_t num, uint8_t start_addr, uint8_t size, uint8_t **data\/*[num][size]*\/) {$/;"	f	class:dp::srvpp
+lpkt_mem_write_all	dpspp.h	/^    errno_t lpkt_mem_write_all (uint8_t id[\/*num*\/], uint8_t num , uint8_t start_addr, uint8_t size, uint8_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+lpkt_mem_write_int16	dpspp.h	/^    errno_t lpkt_mem_write_int16 (uint8_t id[\/*num*\/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t **data\/*[num][size]*\/) {$/;"	f	class:dp::srvpp
+lpkt_mem_write_int16_all	dpspp.h	/^    errno_t lpkt_mem_write_int16_all (uint8_t id[\/*num*\/], uint8_t num , uint8_t start_addr, uint8_t size, int16_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+lpkt_write	dpspp.h	/^    errno_t lpkt_write (void) {$/;"	f	class:dp::srvpp
+open	dpspp.h	/^    errno_t open (const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity) {$/;"	f	class:dp::srvpp
+rsxpp	dpspp.h	/^    rsxpp(void) {$/;"	f	class:dp::srvpp
+servo	dpspp.h	/^    rsx *servo;$/;"	m	class:dp::srvpp
+set_serial	dpspp.h	/^    errno_t set_serial (bool use_serial) {$/;"	f	class:dp::srvpp
+spkt_mem_read	dpspp.h	/^    errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+spkt_mem_read_int16	dpspp.h	/^    errno_t spkt_mem_read_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+spkt_mem_write	dpspp.h	/^    errno_t spkt_mem_write (uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+spkt_mem_write_int16	dpspp.h	/^    errno_t spkt_mem_write_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[\/*size*\/]) {$/;"	f	class:dp::srvpp
+spkt_write	dpspp.h	/^    errno_t spkt_write (void) {$/;"	f	class:dp::srvpp
+spkt_write_read	dpspp.h	/^    errno_t spkt_write_read (void) {$/;"	f	class:dp::srvpp
+srvpp	dpspp.h	/^  class srvpp$/;"	c	namespace:dp
+~rsxpp	dpspp.h	/^    ~rsxpp(void) {$/;"	f	class:dp::srvpp

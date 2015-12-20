@@ -1,18 +1,16 @@
 
-#ifndef RSXPP_H
-#define RSXPP_H
+#ifndef SPP_H
+#define SPP_H
 
 extern "C" {
-  #include "rsx.h"
+  #include "dpservo.h"
   #include "serial/hr_serial.h"
 }
-
-#include "boost/python.hpp"
 
 namespace dp {
 
   template <size_t kNUM_OF_JOINTS, size_t kMAX_PKT_SIZE>
-  class rsxpp
+  class dpspp
   {
    public:
     rsxpp(void) {
@@ -100,8 +98,6 @@ namespace dp {
  
    protected: 
     DPSERVO_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE, RSX_DECL);
-    //RSX_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE);
-    //dpservo *servo;
     rsx *servo;
    private:
   };

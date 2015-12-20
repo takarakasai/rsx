@@ -6,6 +6,12 @@
 
 #include "hr_unixio.h"
 
+#define HR_SERIAL_DECL(name) \
+  hr_serial name
+
+#define HR_SERIAL_INIT(name) \
+  hr_serial_init(&name)
+
 typedef enum {
   HR_PAR_NONE,
   HR_PAR_EVEN,

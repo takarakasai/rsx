@@ -33,6 +33,12 @@
     return EINVAL;                                   \
   }
 
+#define ELEGE(lvalue, hvalue, variable)              \
+  if ((variable <= lvalue) || (hvalue <= variable)) { \
+    fprintf(stderr, "--> %s %s %d\n", __FILE__, __FUNCTION__, __LINE__); \
+    return EINVAL;                                   \
+  }
+
 #define ECALL(function)     \
   do {                      \
     errno_t eno = function; \

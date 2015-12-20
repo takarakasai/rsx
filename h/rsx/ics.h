@@ -50,7 +50,7 @@ typedef enum {
 } ICS_UART_RATE;
 
 typedef struct {
-  dpservo base; /* inherit dpservo */
+  dpservo_base base; /* inherit dpservo */
 
   size_t retry_count;
 

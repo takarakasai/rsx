@@ -25,7 +25,7 @@
     rsx_init(&name, &(name ## _lpkt), &(name ## _spkt))
 
 typedef struct {
-  dpservo base; /* inherit dpservo */
+  dpservo_base base; /* inherit dpservo */
 
   size_t retry_count;
 
@@ -50,12 +50,6 @@ errno_t rsx_lpkt_mem_write_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint
 errno_t rsx_lpkt_mem_write_int16_all (rsx *rsx, uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]);
 
 errno_t rsx_set_serial (rsx *x, bool use_serial);
-
-// dpservo interfaces
-errno_t set_state (dpservo *dps, uint8_t id, dps_servo_state state);
-errno_t set_states (dpservo *dps, dps_servo_state state);
-errno_t set_goal (dpservo *dps, uint8_t id, float64_t goal);
-errno_t set_goals (dpservo *dps, size_t num, float64_t goal[/*num*/]);
 
 #endif
  

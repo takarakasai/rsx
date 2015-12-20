@@ -1,0 +1,63 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+DPSERVO_DECL	dpservo.h	12;"	d
+DPSERVO_H	dpservo.h	3;"	d
+DPSERVO_INIT	dpservo.h	19;"	d
+DP_ERR_H	dp_err.h	3;"	d
+DP_TYPE_H	dp_type.h	3;"	d
+ECALL	dp_err.h	42;"	d
+ELEGE	dp_err.h	36;"	d
+ELEGT	dp_err.h	30;"	d
+ELTGE	dp_err.h	24;"	d
+ELTGT	dp_err.h	18;"	d
+EOK	dp_type.h	19;"	d
+EVALUE	dp_err.h	16;"	d
+EVALUE_ERRNO	dp_err.h	10;"	d
+buff	dpservo.h	/^  uint8_t *buff\/*[max_size]*\/;$/;"	m	struct:dpservo_struct
+char8_t	dp_type.h	/^typedef char char8_t;$/;"	t
+dps_close	dpservo.h	/^static inline errno_t dps_close (dpservo *dps) {$/;"	f
+dps_open	dpservo.h	/^static inline errno_t dps_open (dpservo *dps, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity) {$/;"	f
+dps_read_mem	dpservo.h	/^static inline errno_t dps_read_mem (dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[\/*size*\/]) {$/;"	f
+dps_read_mem_op	dpservo.h	/^typedef errno_t (*dps_read_mem_op)(dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size\/*[byte]*\/, uint8_t data[\/*size*\/]);$/;"	t
+dps_servo_state	dpservo.h	/^} dps_servo_state;$/;"	t	typeref:enum:__anon1
+dps_set_goal	dpservo.h	/^static inline errno_t dps_set_goal (dpservo *dps, const uint8_t id, float64_t goal) {$/;"	f
+dps_set_goal_op	dpservo.h	/^typedef errno_t (*dps_set_goal_op)(dpservo *dps, const uint8_t id, float64_t goal);$/;"	t
+dps_set_goals	dpservo.h	/^static inline errno_t dps_set_goals (dpservo *dps, const size_t num, float64_t goal[\/*num*\/]) {$/;"	f
+dps_set_goals_op	dpservo.h	/^typedef errno_t (*dps_set_goals_op)(dpservo *dps, const size_t num, float64_t goal[\/*num*\/]);$/;"	t
+dps_set_serial	dpservo.h	/^static inline errno_t dps_set_serial (dpservo *dps, bool io_enabled) {$/;"	f
+dps_set_state	dpservo.h	/^static inline errno_t dps_set_state (dpservo *dps, const uint8_t id, dps_servo_state state) {$/;"	f
+dps_set_state_op	dpservo.h	/^typedef errno_t (*dps_set_state_op)(dpservo *dps, const uint8_t id, dps_servo_state state);$/;"	t
+dps_set_states	dpservo.h	/^static inline errno_t dps_set_states (dpservo *dps, dps_servo_state state) {$/;"	f
+dps_set_states_op	dpservo.h	/^typedef errno_t (*dps_set_states_op)(dpservo *dps, dps_servo_state state);$/;"	t
+dps_write_mem	dpservo.h	/^static inline errno_t dps_write_mem (dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[\/*size*\/]) {$/;"	f
+dps_write_mem_op	dpservo.h	/^typedef errno_t (*dps_write_mem_op)(dpservo *dps, const uint8_t id, uint8_t start_addr, size_t size\/*[byte]*\/, uint8_t data[\/*size*\/]);$/;"	t
+dpservo	dpservo.h	/^typedef struct dpservo_struct dpservo;$/;"	t	typeref:struct:dpservo_struct
+dpservo	dpservo.h	/^} dpservo;$/;"	t	typeref:struct:dpservo_struct
+dpservo_init	dpservo.h	/^static inline errno_t dpservo_init ($/;"	f
+dpservo_ops	dpservo.h	/^} dpservo_ops;$/;"	t	typeref:struct:__anon2
+dpservo_ops_init	dpservo.h	/^inline errno_t dpservo_ops_init ($/;"	f
+dpservo_struct	dpservo.h	/^typedef struct dpservo_struct {$/;"	s
+eok	dp_type.h	/^static const errno_t eok = EOK;$/;"	v
+errno_t	dp_type.h	/^typedef int errno_t;$/;"	t
+float32_t	dp_type.h	/^typedef float  float32_t;$/;"	t
+float64_t	dp_type.h	/^typedef double float64_t;$/;"	t
+get_dpservo	dpservo.h	/^static inline dpservo* get_dpservo(void* child) {$/;"	f
+hrs	dpservo.h	/^  hr_serial *hrs;$/;"	m	struct:dpservo_struct
+io_enabled	dpservo.h	/^  bool io_enabled;$/;"	m	struct:dpservo_struct
+kDpsServoBrk	dpservo.h	/^  kDpsServoBrk,$/;"	e	enum:__anon1
+kDpsServoOff	dpservo.h	/^  kDpsServoOff,$/;"	e	enum:__anon1
+kDpsServoOn	dpservo.h	/^  kDpsServoOn$/;"	e	enum:__anon1
+max_size	dpservo.h	/^  size_t max_size;$/;"	m	struct:dpservo_struct
+num_of_servo	dpservo.h	/^  size_t num_of_servo;         \/* number of servo to be used. *\/$/;"	m	struct:dpservo_struct
+ops	dpservo.h	/^  dpservo_ops ops;$/;"	m	struct:dpservo_struct
+read_mem	dpservo.h	/^  dps_read_mem_op read_mem;$/;"	m	struct:__anon2
+servo_ids	dpservo.h	/^  uint8_t *servo_ids\/*[num_of_servo]*\/;$/;"	m	struct:dpservo_struct
+set_goal	dpservo.h	/^  dps_set_goal_op set_goal;$/;"	m	struct:__anon2
+set_goals	dpservo.h	/^  dps_set_goals_op set_goals;$/;"	m	struct:__anon2
+set_state	dpservo.h	/^  dps_set_state_op set_state;$/;"	m	struct:__anon2
+set_states	dpservo.h	/^  dps_set_states_op set_states;$/;"	m	struct:__anon2
+write_mem	dpservo.h	/^  dps_write_mem_op write_mem;$/;"	m	struct:__anon2
