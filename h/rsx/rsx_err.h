@@ -37,7 +37,7 @@
   do {                      \
     errno_t eno = function; \
     if (eno != EOK) {        \
-      fprintf(stderr, "--> %s %s %d\n", __FILE__, __FUNCTION__, __LINE__); \
+      fprintf(stderr, "--> %s %s %d eno:%d\n", __FILE__, __FUNCTION__, __LINE__, eno); \
       return eno;           \
     }                       \
   } while(0)

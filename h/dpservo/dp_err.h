@@ -39,14 +39,18 @@
     return EINVAL;                                   \
   }
 
-#define ECALL(function)     \
+#define ECALL2(function, print_flg)     \
   do {                      \
     errno_t eno = function; \
-    if (eno != EOK) {        \
-      fprintf(stderr, "--> %s %s %d\n", __FILE__, __FUNCTION__, __LINE__); \
+    if (eno != EOK) {       \
+        if (print_flg) {    \
+          fprintf(stderr, "--> %s %s %d eno:%d\n", __FILE__, __FUNCTION__, __LINE__, eno); \
+        }                   \
       return eno;           \
     }                       \
   } while(0)
+
+#define ECALL(function) ECALL2(function, true)
 
 #endif
 
