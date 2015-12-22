@@ -65,6 +65,4 @@ errno_t ics_ser_get_param_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint8_t scmd
 //errno_t ics_deser_get_param_cmd (uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t size, uint8_t data[/*max_size*/], uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
 errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
 
-int ics_test(ics *ics);
-
 #endif

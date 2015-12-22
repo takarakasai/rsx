@@ -196,59 +196,6 @@ errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t sc
   return EOK;
 }
 
-int ics_test(ics *ics) {
-  EVALUE(NULL, ics);
-
-  //uint8_t data[100] = {0};
-  //size_t size;
-
-  //for (size_t i = 0; i < 10; i++) {
-  //  ics_ser_set_pos_cmd (rsx, 0, ICS_CMD_REQ_POS, i * 100, 100, data, &size);
-
-  //  usleep(300 * 1000);
-  //}
-  //
-  const uint8_t id = 1;
-  uint16_t refpos, curpos = 0;
-
-  //ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 6000, 100, data, &size);
-  refpos = 6000;
-  ics_write_read_pos (ics, id, ICS_CMD_REQ_POS, refpos, &curpos);
-  usleep(1000 * 1000);
-
-  //ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 7500, &size);
-  refpos = 7500;
-  ics_write_read_pos (ics, id, ICS_CMD_REQ_POS, refpos, &curpos);
-
-  usleep(1000 * 1000);
-  
-  //ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 6000, &size);
-  refpos = 6000;
-  ics_write_read_pos (ics, id, ICS_CMD_REQ_POS, refpos, &curpos);
-
-  usleep(1000 * 1000);
-
-  //ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 7500, &size);
-  refpos = 7500;
-  ics_write_read_pos (ics, id, ICS_CMD_REQ_POS, refpos, &curpos);
-
-  usleep(1000 * 1000);
-
-//  for (size_t i = 0; i < 10; i++) {
-//    ics_ser_set_pos_cmd (rsx, 0, ICS_CMD_REQ_POS, (10-i) * 100, 100, data, &size);
-//
-//    usleep(100 * 1000);
-//  }
-
-  for (size_t i = 0; i < 10; i++) {
-    //ics_ser_set_pos_cmd (id, ICS_CMD_REQ_POS, 0, &size);
-    ics_write_read_pos (ics, id, ICS_CMD_REQ_POS, 0, &curpos);
-    usleep(100 * 1000);
-  }
-
-  return 0;
-}
-
 static errno_t set_state (dpservo_base *dps, uint8_t id, dps_servo_state state) {
   EVALUE(NULL, dps);
   switch (state) {
