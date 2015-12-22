@@ -12,34 +12,38 @@
 #define DPS_SERVO_ID_INVALID 0xFF
 #define DPS_SERVO_ID_MAX     0xFE /* 254 */
 
-/*
-#define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
-  struct dps_struct {                                                           \
-    PROTOCOL_DECL_MACRO(child, num_of_servo);                       \
-    HR_SERIAL_DECL(hrs);                                            \
-    uint8_t   ids  [num_of_servo];                                  \
-    float64_t oang [num_of_servo];                                  \
-    uint8_t   buff [max_data_size];                                 \
-  }name
+#define DPSERVO_STRUCT(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
+  struct dps_struct {                                                          \
+    PROTOCOL_DECL_MACRO(child, num_of_servo);                                  \
+    HR_SERIAL_DECL(hrs);                                                       \
+    uint8_t   ids  [num_of_servo];                                             \
+    float64_t oang [num_of_servo];                                             \
+    uint8_t   buff [max_data_size];                                            \
+  }
 
-#define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)     \
-  HR_SERIAL_INIT(name.hrs);                         \
-  dpservo_init(                                     \
-   get_dpservo_base(&(name.child)), &(name.hrs),    \
-   sizeof(name.ids) / sizeof(name.ids[0]),      \
-   (name.ids),                                  \
-   (name.oang),                                 \
-   sizeof(name.buff) / sizeof(name.buff[0]),    \
-   (name.buff));                       \
-  PROTOCOL_INIT_MACRO(name.child)
-*/
+#define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)                 \
+  DPSERVO_STRUCT(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) name ## _dps_struct; \
+  dpservo_base *name
 
-#define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
-    PROTOCOL_DECL_MACRO(name ## _child, num_of_servo);                       \
-    HR_SERIAL_DECL(name ## _hrs);                                            \
-    uint8_t   name ## _ids   [num_of_servo];                                 \
-    float64_t name ## _oang  [num_of_servo];                                 \
-    uint8_t   name ## _buff  [max_data_size];                                \
+#define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)                               \
+  HR_SERIAL_INIT(name ## _dps_struct.hrs);                                     \
+  dpservo_init(                                                                \
+   get_dpservo_base(&(name ## _dps_struct.child)), &(name ## _dps_struct.hrs), \
+   sizeof(name ## _dps_struct.ids) / sizeof(name ## _dps_struct.ids[0]),       \
+   (name ## _dps_struct.ids),                                                  \
+   (name ## _dps_struct.oang),                                                 \
+   sizeof(name ## _dps_struct.buff) / sizeof(name ## _dps_struct.buff[0]),     \
+   (name ## _dps_struct.buff),                                                 \
+   &(name));                                                                   \
+  PROTOCOL_INIT_MACRO(name ## _dps_struct.child)
+
+#if 0
+#define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)   \
+    PROTOCOL_DECL_MACRO(name ## _child, num_of_servo);                         \
+    HR_SERIAL_DECL(name ## _hrs);                                              \
+    uint8_t   name ## _ids   [num_of_servo];                                   \
+    float64_t name ## _oang  [num_of_servo];                                   \
+    uint8_t   name ## _buff  [max_data_size];                                  \
     dpservo_base *name
 
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)         \
@@ -52,6 +56,7 @@
    sizeof(name ## _buff) / sizeof(name ## _buff[0]),    \
    (name ## _buff), &(name));                           \
   PROTOCOL_INIT_MACRO(name ## _child)
+#endif
 
 typedef enum {
   kDpsServoOff,
@@ -59,7 +64,6 @@ typedef enum {
   kDpsServoOn
 } dps_servo_state;
 
-typedef struct dps_struct dps;
 typedef struct dpservo_base_struct dpservo_base;
 
 typedef errno_t (*dps_set_state_op)(dpservo_base *dps, const uint8_t id, dps_servo_state state);
