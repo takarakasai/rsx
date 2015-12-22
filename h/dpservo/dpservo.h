@@ -9,6 +9,8 @@
 
 #include "serial/hr_serial.h"
 
+#define DPS_SERVO_ID_INVALID 0xFF
+
 /*
 #define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
   struct dps_struct {                                                           \
@@ -105,6 +107,7 @@ typedef struct dpservo_base_struct {
   size_t max_size;
   uint8_t *buff/*[max_size]*/;
 
+  size_t max_num_of_servo;     /* max number of servo */
   size_t num_of_servo;         /* number of servo to be used. */
   uint8_t *servo_ids/*[num_of_servo]*/;
 
@@ -136,10 +139,11 @@ static inline errno_t dpservo_init (
   dps->hrs = hrs;
 
   dps->servo_ids = ids;
-  dps->num_of_servo = num_of_servo;
-  for (uint8_t i = 0; i < num_of_servo; i++) {
+  dps->max_num_of_servo = num_of_servo;
+  dps->num_of_servo     = 0;
+  for (uint8_t i = 0; i < dps->max_num_of_servo; i++) {
     /* [1, 2, 3, ..., num_of_servo] */
-    dps->servo_ids[i] = i + 1;
+    dps->servo_ids[i] = DPS_SERVO_ID_INVALID; /* 0xFF */
   }
 
   dps->buff = buff;
@@ -152,6 +156,28 @@ static inline errno_t dpservo_init (
   *p_dps = dps;
 
   return EOK;
+}
+
+static inline errno_t dps_add_servo (dpservo_base *dps, uint8_t id) {
+  EVALUE(NULL, dps);
+  ELTGE(0, DPS_SERVO_ID_INVALID, id);
+  ELTGE(0, dps->max_num_of_servo, dps->num_of_servo);
+
+  for (size_t i = 0; i < dps->num_of_servo; i++) {
+    if (dps->servo_ids[i] == id) {
+      fprintf(stderr, " %s ID:%02x is already added\n", __FUNCTION__, id);
+      return EINVAL;
+    }
+  }
+
+  dps->servo_ids[dps->num_of_servo++] = id;
+
+  return EOK;
+}
+
+static inline uint8_t dps_get_num_of_servo (dpservo_base *dps) {
+  EVALUE(NULL, dps);
+  return dps->num_of_servo;
 }
 
 static inline errno_t dps_open (dpservo_base *dps, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity) {
