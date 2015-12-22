@@ -293,7 +293,6 @@ errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]) {
   for (size_t i = 0; i < num; i++) {
     ogoal[i][0] = (int16_t)(goal[i] * 10);
   }
-  //ECALL(rsx_lpkt_mem_write_int16((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
   ECALL(_rsx_lpkt_mem_write_int16((rsx*)dps, dps->servo_ids, dps->num_of_servo, RSX_RAM_GOAL_POS_L, 1, ogoal));
   return EOK;
 }
