@@ -175,6 +175,44 @@ static inline errno_t dps_add_servo (dpservo_base *dps, uint8_t id) {
   return EOK;
 }
 
+static inline errno_t dps_clear_servo (dpservo_base *dps) {
+  EVALUE(NULL, dps);
+  ELTGE(0, dps->max_num_of_servo, dps->num_of_servo);
+
+  for (size_t i = 0; i < dps->num_of_servo; i++) {
+    dps->servo_ids[i] = DPS_SERVO_ID_INVALID;
+  }
+
+  return EOK;
+}
+
+static inline errno_t _dps_set_servo (dpservo_base *dps, uint8_t num, uint8_t id[/*num*/]) {
+  EVALUE(NULL, dps);
+  ELTGE(0, dps->max_num_of_servo, num);
+  EVALUE(NULL, id);
+
+  for (size_t i = 0; i < num; i++) {
+    ECALL(dps_add_servo(dps, id[i]));
+  }
+
+  return EOK;
+}
+
+static inline errno_t dps_set_servo (dpservo_base *dps, uint8_t num, uint8_t id[/*num*/]) {
+  EVALUE(NULL, dps);
+
+  ECALL(dps_clear_servo(dps));
+
+  errno_t eno = _dps_set_servo(dps, num, id);
+
+  if (eno != EOK) {
+    ECALL(dps_clear_servo(dps));
+    return eno;
+  }
+
+  return EOK;
+}
+
 static inline uint8_t dps_get_num_of_servo (dpservo_base *dps) {
   EVALUE(NULL, dps);
   return dps->num_of_servo;
