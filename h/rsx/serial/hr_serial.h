@@ -3,6 +3,8 @@
 #define HR_SERIAL_H
 
 #include <termios.h>
+// TODO:AAA
+//#include <asm/termios.h>
 
 #include "hr_unixio.h"
 
@@ -27,8 +29,27 @@ typedef enum {
   HR_B230400 ,
   HR_B460800 ,
   HR_B576000 ,
-  HR_B1152000
+  HR_B625000 ,
+  HR_B1152000,
+  HR_B1250000
 } hr_baudrate;
+
+static inline const char* hr_baudrate2str (hr_baudrate baudrate) {
+  switch (baudrate) {
+    case HR_B9600     : return "HR_B9600   ";
+    case HR_B19200    : return "HR_B19200  ";
+    case HR_B38400    : return "HR_B38400  ";
+    case HR_B57600    : return "HR_B57600  ";
+    case HR_B115200   : return "HR_B115200 ";
+    case HR_B230400   : return "HR_B230400 ";
+    case HR_B460800   : return "HR_B460800 ";
+    case HR_B576000   : return "HR_B576000 ";
+    case HR_B625000   : return "HR_B625000 ";
+    case HR_B1152000  : return "HR_B1152000";
+    case HR_B1250000  : return "HR_B1250000";
+    default           : return "HR_INVALID" ;
+  }
+}
 
 typedef struct {
   int fd;
