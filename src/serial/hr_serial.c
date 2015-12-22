@@ -1,7 +1,7 @@
 
 #include "serial/hr_serial.h"
 
-#include "rsx_err.h"
+#include "dp_err.h"
 #include "time/hr_unixtime.h"
 
 /* for error print */
@@ -15,7 +15,7 @@
 
 #define ICS
 
-static const size_t timeout_usec = 200;
+static const size_t timeout_usec = 200; // TODO: ICS --> 100 | RSX --> 200
 static const size_t wait_usec    = 10;
 
 static errno_t setraw(struct termios *term) {
@@ -26,6 +26,12 @@ static errno_t setraw(struct termios *term) {
   term->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
   term->c_cflag &= ~(CSIZE | CRTSCTS);          /* flag off */
   term->c_cflag |= CS8;
+
+  /// TODO:AAA
+  //term->c_cflag &= ~CBAUD; // ~0|010017 --> ~0b 0 001 000 000 001 111 --> 0b 1 110 111 111 110 000
+  //term->c_cflag |= BOTHER; //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
+  //term->c_ispeed = 1250000;
+  //term->c_ospeed = 1250000;
 
   return EOK;
 }
@@ -69,7 +75,7 @@ static errno_t set_parity (struct termios *term, hr_parity parity) {
   return EOK;
 }
 
-static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
+static errno_t _setspeed (struct termios *term, hr_baudrate baudrate) {
   EVALUE(NULL, term);
 
   speed_t speed;
@@ -82,7 +88,9 @@ static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
     case HR_B230400 : speed = B230400  ; break;
     case HR_B460800 : speed = B460800  ; break;
     case HR_B576000 : speed = B576000  ; break;
+    case HR_B625000 : return EINVAL;
     case HR_B1152000: speed = B1152000 ; break;
+    case HR_B1250000: return EINVAL;
     default :
       return EINVAL;
   }
@@ -104,18 +112,81 @@ static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
   return EOK;
 }
 
+static errno_t _setspeed2 (struct termios *term, int speed) {
+  EVALUE(NULL, term);
+
+#if 0
+  int speed;
+  switch (baudrate) {
+    case HR_B9600   : speed = 9600    ; break;
+    case HR_B19200  : speed = 19200   ; break;
+    case HR_B38400  : speed = 38400   ; break;
+    case HR_B57600  : speed = 57600   ; break;
+    case HR_B115200 : speed = 115200  ; break;
+    case HR_B230400 : speed = 230400  ; break;
+    case HR_B460800 : speed = 460800  ; break;
+    case HR_B576000 : speed = 576000  ; break;
+    case HR_B1152000: speed = 1152000 ; break;
+    case HR_B1250000: speed = 1250000 ; break;
+    default :
+      return EINVAL;
+  }
+#endif
+
+  term->c_cflag &= ~CBAUD;   // ~0|010017 --> ~0b 0 001 000 000 001 111 --> 0b 1 110 111 111 110 000
+  //term->c_cflag |= BOTHER; //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
+  term->c_cflag |= CBAUDEX;  //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
+ 
+  term->c_ispeed = speed;
+
+  term->c_ospeed = speed;
+
+  return EOK;
+}
+
+static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
+  EVALUE(NULL, term);
+
+  switch (baudrate) {
+    case HR_B9600   :
+    case HR_B19200  :
+    case HR_B38400  :
+    case HR_B57600  :
+    case HR_B115200 :
+    case HR_B230400 :
+    case HR_B460800 :
+    case HR_B576000 :
+      ECALL(_setspeed(term, baudrate)); break;
+    case HR_B625000 :
+      ECALL(_setspeed2(term,  625000)); break;
+    case HR_B1152000:
+      ECALL(_setspeed(term, baudrate)); break;
+    case HR_B1250000:
+      ECALL(_setspeed2(term, 1250000)); break;
+    default :
+      return EINVAL;
+  }
+
+  return EOK;
+}
+
+
 static errno_t setattr (int fd, struct termios *term) {
   EVALUE(0, fd);
   EVALUE(NULL, term);
 
   int eno;
+
+  // TODO:AAA
   eno = tcflush(fd, TCIFLUSH);
   if (eno != 0) {
     printf("file can not tcflush : %d\n", errno);
     return errno;
   }
 
+  // TODO:AAA
   eno = tcsetattr(fd, TCSANOW, term);
+  //eno = ioctl(fd, TCSETS2, term);
   if (eno != 0) {
     printf("file can not tcsetattr : %d\n", errno);
     return errno;
@@ -159,11 +230,14 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_ba
 
   ECALL(_open(path, &(ser->fd)));
 
+  //TODO:AAA
   tcgetattr(ser->fd, &(ser->prev_term)); /* 現在のポート設定を待避 */
+  //ioctl(ser->fd, TCGETS2, &(ser->prev_term));
 
   ECALL(setraw(&(ser->term)));
 
   ECALL(set_parity(&(ser->term), parity));
+
   ECALL(setspeed(&(ser->term), baudrate));
 
   ECALL(setattr(ser->fd, &(ser->term)));
@@ -214,8 +288,8 @@ static errno_t serial_read (hr_serial *ser, void* data, size_t size) {
     }
   }
 
-  //printf("           read latency : %zd / %zd %s\n",
-  //        cnt * wait_usec, max_count * wait_usec, size == rcv_cnt ? "OK" : "NG");
+  //printf("           read latency : %zd / %zd %s (%zd/%zd)\n",
+  //        cnt * wait_usec, max_count * wait_usec, size == rcv_cnt ? "OK" : "NG", rcv_cnt, size);
 
 #if DEBUG
   printf("           size[%03zd] :", rcv_cnt);
@@ -235,7 +309,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   ECALL(hr_get_time(&tm_bef));
 #endif
 
-  ECALL(serial_read(ser, data, size));
+  ECALL2(serial_read(ser, data, size), false);
 
 #if defined(HR_SERIAL_LATENCY_CHECK_DETAIL)
   ECALL(hr_get_time(&tm_aft));
@@ -256,7 +330,7 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
   ECALL(_write(ser->fd, data, size, &send_size));
 
   if (size != send_size) {
-    printf("error %s %zd / %zd\n", __FUNCTION__, size, send_size);
+    printf("error %s %zd / %zd\n", __FUNCTION__, send_size, size);
     return -1;
   }
 
