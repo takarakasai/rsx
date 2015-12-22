@@ -13,7 +13,7 @@ namespace bp = boost::python;
 class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
 
 #define GET_C_ARRAY(TYPE, size_name, array_name, bpy_list)     \
-  const TYPE size_name = len(bpy_list);                        \
+  const size_t size_name = len(bpy_list);                      \
   TYPE array_name[size_name];                                  \
   for (size_t i = 0; i < size_name; i++) {                     \
     array_name[i] = boost::python::extract<TYPE>(bpy_list[i]); \
@@ -114,7 +114,6 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
     GET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
 
-    printf("============> %d %d\n", num, size);
     ECALL(base::lpkt_mem_write_all(id, num, start_addr, size, data));
     return EOK;
   }

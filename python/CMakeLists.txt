@@ -10,9 +10,9 @@ include_directories(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
 include_directories(${rsx_SOURCE_DIR}/h/rsx)
 include_directories(${rsx_SOURCE_DIR}/h/rsxpp)
 
-if(${CMAKE_COMPILER_IS_GNUXX})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
-endif()
+#if(${CMAKE_COMPILER_IS_GNUXX})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
+#endif()
 
 link_libraries(rsx ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 
