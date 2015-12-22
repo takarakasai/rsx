@@ -34,7 +34,7 @@ errno_t _write (int fd, void* data, size_t size, size_t *send_size) {
 
   *send_size = write(fd, data, size);
 
-  return EOK;
+  return *send_size == -1 ? errno : EOK;
 }
 
 errno_t _read (int fd, void* data, size_t size, size_t *read_size) {
