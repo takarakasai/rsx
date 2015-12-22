@@ -10,14 +10,16 @@
 #include "serial/hr_serial.h"
 
 #define DPS_SERVO_ID_INVALID 0xFF
+#define DPS_SERVO_ID_MAX     0xFE /* 254 */
 
 /*
 #define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
   struct dps_struct {                                                           \
     PROTOCOL_DECL_MACRO(child, num_of_servo);                       \
     HR_SERIAL_DECL(hrs);                                            \
-    uint8_t ids  [num_of_servo];                                    \
-    uint8_t buff [max_data_size];                                   \
+    uint8_t   ids  [num_of_servo];                                  \
+    float64_t oang [num_of_servo];                                  \
+    uint8_t   buff [max_data_size];                                 \
   }name
 
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)     \
@@ -26,6 +28,7 @@
    get_dpservo_base(&(name.child)), &(name.hrs),    \
    sizeof(name.ids) / sizeof(name.ids[0]),      \
    (name.ids),                                  \
+   (name.oang),                                 \
    sizeof(name.buff) / sizeof(name.buff[0]),    \
    (name.buff));                       \
   PROTOCOL_INIT_MACRO(name.child)
@@ -34,8 +37,9 @@
 #define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
     PROTOCOL_DECL_MACRO(name ## _child, num_of_servo);                       \
     HR_SERIAL_DECL(name ## _hrs);                                            \
-    uint8_t name ## _ids  [num_of_servo];                                    \
-    uint8_t name ## _buff [max_data_size];                                   \
+    uint8_t   name ## _ids   [num_of_servo];                                 \
+    float64_t name ## _oang  [num_of_servo];                                 \
+    uint8_t   name ## _buff  [max_data_size];                                \
     dpservo_base *name
 
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)         \
@@ -44,6 +48,7 @@
    get_dpservo_base(&name ## _child), &(name ## _hrs),  \
    sizeof(name ## _ids) / sizeof(name ## _ids[0]),      \
    (name ## _ids),                                      \
+   (name ## _oang),                                     \
    sizeof(name ## _buff) / sizeof(name ## _buff[0]),    \
    (name ## _buff), &(name));                           \
   PROTOCOL_INIT_MACRO(name ## _child)
@@ -107,9 +112,12 @@ typedef struct dpservo_base_struct {
   size_t max_size;
   uint8_t *buff/*[max_size]*/;
 
+  uint8_t id2idx[DPS_SERVO_ID_MAX + 1];
+
   size_t max_num_of_servo;     /* max number of servo */
   size_t num_of_servo;         /* number of servo to be used. */
   uint8_t *servo_ids/*[num_of_servo]*/;
+  float64_t *oang/*[num_of_servo]*/;
 
   /* debug */
   bool io_enabled;
@@ -124,13 +132,14 @@ static inline dpservo_base* get_dpservo_base(void* child) {
 
 static inline errno_t dpservo_init (
         dpservo_base *dps, hr_serial *hrs,
-        size_t num_of_servo, uint8_t ids[/*num_of_servo*/],
+        size_t num_of_servo, uint8_t ids[/*num_of_servo*/], float64_t oang[/*num_of_servo*/],
         //size_t max_size, uint8_t buff[/*max_size*/])
         size_t max_size, uint8_t buff[/*max_size*/], dpservo_base **p_dps)
 {
   EVALUE(NULL, dps);
   EVALUE(NULL, hrs);
   EVALUE(NULL, ids);
+  EVALUE(NULL, oang);
   EVALUE(NULL, buff);
   EVALUE(NULL, p_dps);
 
@@ -139,11 +148,17 @@ static inline errno_t dpservo_init (
   dps->hrs = hrs;
 
   dps->servo_ids = ids;
+  dps->oang      = oang;
   dps->max_num_of_servo = num_of_servo;
   dps->num_of_servo     = 0;
   for (uint8_t i = 0; i < dps->max_num_of_servo; i++) {
     /* [1, 2, 3, ..., num_of_servo] */
     dps->servo_ids[i] = DPS_SERVO_ID_INVALID; /* 0xFF */
+    dps->oang[i]      = 0.0;
+  }
+
+  for (uint8_t i = 0; i < DPS_SERVO_ID_MAX; i++) {
+    dps->id2idx[i] = 0; // TODO:
   }
 
   dps->buff = buff;
@@ -170,6 +185,7 @@ static inline errno_t dps_add_servo (dpservo_base *dps, uint8_t id) {
     }
   }
 
+  dps->id2idx[id] = dps->num_of_servo;
   dps->servo_ids[dps->num_of_servo++] = id;
 
   return EOK;
@@ -180,6 +196,8 @@ static inline errno_t dps_clear_servo (dpservo_base *dps) {
   ELTGE(0, dps->max_num_of_servo, dps->num_of_servo);
 
   for (size_t i = 0; i < dps->num_of_servo; i++) {
+    ELTGT(0, DPS_SERVO_ID_MAX, dps->servo_ids[i]);
+    dps->id2idx[dps->servo_ids[i]] = 0; // TODO:
     dps->servo_ids[i] = DPS_SERVO_ID_INVALID;
   }
 
@@ -208,6 +226,27 @@ static inline errno_t dps_set_servo (dpservo_base *dps, uint8_t num, uint8_t id[
   if (eno != EOK) {
     ECALL(dps_clear_servo(dps));
     return eno;
+  }
+
+  return EOK;
+}
+
+static inline errno_t dps_set_offset_angle (dpservo_base *dps, uint8_t id, float64_t oangle) {
+  EVALUE(NULL, dps);
+  ELTGT(0, DPS_SERVO_ID_MAX, id); /* 0 <= id <= 0xFE is OK */
+
+  uint8_t idx = dps->id2idx[id];
+  dps->oang[idx] = oangle;
+
+  return EOK;
+}
+
+static inline errno_t dps_set_offset_angles (dpservo_base *dps, uint8_t num, float64_t oangle[/*num*/]) {
+  EVALUE(NULL, dps);
+  // TODO: num range check
+
+  for (size_t i = 0; i < num; i++) {
+    dps->oang[i] = oangle[i];
   }
 
   return EOK;
@@ -250,13 +289,19 @@ static inline errno_t dps_set_states (dpservo_base *dps, dps_servo_state state) 
 
 static inline errno_t dps_set_goal (dpservo_base *dps, const uint8_t id, float64_t goal) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.set_goal(dps, id, goal));
+  uint8_t idx = dps->id2idx[id];
+  const float64_t act_goal = goal + dps->oang[idx];
+  ECALL(dps->ops.set_goal(dps, id, act_goal));
   return EOK;
 }
 
 static inline errno_t dps_set_goals (dpservo_base *dps, const size_t num, float64_t goal[/*num*/]) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.set_goals(dps, num, goal));
+  float64_t act_goal[num];
+  for (size_t i = 0; i < num; i++) {
+    act_goal[i] = goal[i] + dps->oang[i];
+  }
+  ECALL(dps->ops.set_goals(dps, num, act_goal));
   return EOK;
 }
 
