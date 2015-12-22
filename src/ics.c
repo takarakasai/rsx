@@ -13,6 +13,17 @@
  *          SERVOID  |  CMD = 100xxxx (xxxx:servoid)
 */
 
+#define ICS_POS_MAX       (135.0) /* [deg] */
+#define ICS_POS_MIN      (-135.0) /* [deg] */
+                                /* ICS spec   |  DP spec   | decimal       */
+#define ICS_POS_MAX_HEX  0x2CEC /* 270[deg]  --> +135[deg] | 11500(0x2cec) */ /* 0x3FFF? */
+#define ICS_POS_MID_HEX  0x1D4C /* 135[deg]  -->    0[deg] |  7500(0x1d4c) */ /* 0x2000? */
+#define ICS_POS_MIN_HEX  0x0DAC /*   0[deg]  --> -135[deg] |  3500(0x0dac) */ /* 0x0001? */
+#define ICS_POS_FREE     0x0000 /* servo free              */
+
+#define ICS_POS2HEX(pos) ((pos) / ICS_POS_MAX * (ICS_POS_MAX_HEX - ICS_POS_MID_HEX) + ICS_POS_MID_HEX)
+#define ICS_HEX2POS(hex) (((hex) - ICS_POS_MID_HEX) * ICS_POS_MAX / (ICS_POS_MAX_HEX - ICS_POS_MID_HEX))
+
 errno_t ics_ser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size) {
   EVALUE(NULL, ics);
   //EVALUE(NULL, data);
@@ -89,20 +100,33 @@ errno_t ics_write_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos) {
   return EOK;
 }
 
-errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos) {
+errno_t _ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos) {
   EVALUE(NULL, ics);
 
   dpservo_base *dps = get_dpservo_base(ics);
 
   ECALL(ics_write_pos(ics, id, cmdid, refpos));
-  //ECALL(ics_ser_set_pos_cmd(id, cmdid, refpos, ics->max_size, ics->buff, &size));
-  //ECALL(hr_serial_write(ics->hrs, ics->buff, ICS_POS_CMD_REQ_PKT_SIZE));
 
-  ECALL(hr_serial_read(dps->hrs, dps->buff, ICS_POS_CMD_REP_PKT_SIZE));
+  ECALL2(hr_serial_read(dps->hrs, dps->buff, ICS_POS_CMD_REP_PKT_SIZE), false);
   ECALL(data_dump(dps->buff, ICS_POS_CMD_REP_PKT_SIZE));
   if (curpos) {
-    ECALL(ics_deser_set_pos_cmd(ics, id, cmdid, refpos, curpos, dps->hrs->baudrate));
-    //printf(" ref:%d vs cur:%d\n", refpos, *curpos);
+    //ECALL(ics_deser_set_pos_cmd(ics, id, cmdid, refpos, curpos, dps->hrs->baudrate)); // TODO:
+    (ics_deser_set_pos_cmd(ics, id, cmdid, refpos, curpos, dps->hrs->baudrate)); // TODO:
+  }
+
+  return EOK;
+}
+
+errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos) {
+  EVALUE(NULL, ics);
+
+  const size_t max_count = ics->retry_count;
+  for (size_t i = 0; i < max_count; i++) {
+    errno_t eno = _ics_write_read_pos(ics, id, cmdid, refpos, curpos);
+    if (eno == EOK) {
+      break;
+    }
+    printf("--- id:%02d pos:%04x fpos:%lf %zd/%zd --failed\n", id, refpos, ICS_HEX2POS(refpos), i, max_count);
   }
 
   return EOK;
@@ -225,17 +249,6 @@ int ics_test(ics *ics) {
   return 0;
 }
 
-#define ICS_POS_MAX       (135.0) /* [deg] */
-#define ICS_POS_MIN      (-135.0) /* [deg] */
-                                /* ICS spec   |  DP spec   | decimal       */
-#define ICS_POS_MAX_HEX  0x2CEC /* 270[deg]  --> +135[deg] | 11500(0x2cec) */ /* 0x3FFF? */
-#define ICS_POS_MID_HEX  0x1D4C /* 135[deg]  -->    0[deg] |  7500(0x1d4c) */ /* 0x2000? */
-#define ICS_POS_MIN_HEX  0x0DAC /*   0[deg]  --> -135[deg] |  3500(0x0dac) */ /* 0x0001? */
-#define ICS_POS_FREE     0x0000 /* servo free              */
-
-#define ICS_POS2HEX(pos) ((pos) / ICS_POS_MAX * (ICS_POS_MAX_HEX - ICS_POS_MID_HEX) + ICS_POS_MID_HEX)
-#define ICS_HEX2POS(hex) (((hex) - ICS_POS_MID_HEX) * ICS_POS_MAX / (ICS_POS_MAX_HEX - ICS_POS_MID_HEX))
-
 static errno_t set_state (dpservo_base *dps, uint8_t id, dps_servo_state state) {
   EVALUE(NULL, dps);
   switch (state) {
@@ -260,7 +273,8 @@ static errno_t set_state (dpservo_base *dps, uint8_t id, dps_servo_state state) 
 static errno_t set_states (dpservo_base *dps, dps_servo_state state) {
   EVALUE(NULL, dps);
   for (size_t i = 0; i < dps->num_of_servo; i++) {
-    ECALL(set_state(dps, dps->servo_ids[i], state));
+    //ECALL(set_state(dps, dps->servo_ids[i], state)); // TODO:
+    (set_state(dps, dps->servo_ids[i], state));
   }
   return EOK;
 }
@@ -282,14 +296,32 @@ static errno_t set_goal (dpservo_base *dps, uint8_t id, float64_t goal) {
   return EOK;
 }
 
+#if defined(HR_SERIAL_LATENCY_CHECK)
+#include "time/hr_unixtime.h"
+#endif
 static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]) {
   EVALUE(NULL, dps);
 
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  hr_time tm_bef, tm_aft, tm_diff;
+  ECALL(hr_get_time(&tm_bef));
+#endif
+
   for (size_t i = 0; i < dps->num_of_servo; i++) {
     uint16_t iogoal = ICS_POS2HEX(goal[i]);
-    ECALL(ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
-    goal[i] = ICS_HEX2POS(iogoal);
+    //ECALL(ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
+    (ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
+    //usleep(1000 * 1000);
+    //goal[i] = ICS_HEX2POS(iogoal);
   }
+
+#if defined(HR_SERIAL_LATENCY_CHECK)
+  ECALL(hr_get_time(&tm_aft));
+  ECALL(hr_diff_time(&tm_bef, &tm_aft, &tm_diff));
+
+  printf("     set goals latency : ");
+  ECALL(hr_dump_time(&tm_diff));
+#endif
 
   return EOK;
 }
