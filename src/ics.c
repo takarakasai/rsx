@@ -4,6 +4,10 @@
 
 #include <unistd.h>
 
+#if defined(HR_SERIAL_LATENCY_CHECK)
+#include "time/hr_unixtime.h"
+#endif
+
 /*
  * position:
  * TX : CMD POSH POSL
@@ -24,6 +28,8 @@
 #define ICS_POS2HEX(pos) ((pos) / ICS_POS_MAX * (ICS_POS_MAX_HEX - ICS_POS_MID_HEX) + ICS_POS_MID_HEX)
 #define ICS_HEX2POS(hex) (((hex) - ICS_POS_MID_HEX) * ICS_POS_MAX / (ICS_POS_MAX_HEX - ICS_POS_MID_HEX))
 
+/*********************************************************************************************************************/
+
 errno_t ics_ser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size) {
   EVALUE(NULL, ics);
   //EVALUE(NULL, data);
@@ -35,7 +41,7 @@ errno_t ics_ser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos, 
   //TODO: max_size check
 
   size_t idx = 0;
-  dps->buff[idx++] = ICS_SER_REQ_CMD(id, cmdid);
+  dps->buff[idx++] = ICS_SER_REQ_POS_CMD(id, cmdid);
   dps->buff[idx++] = ICS_SER_POS_H(pos);
   dps->buff[idx++] = ICS_SER_POS_L(pos);
 
@@ -78,7 +84,7 @@ errno_t ics_deser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t ref
 #endif
 
   /* reply data */
-  if (dps->buff[idx++] != ICS_SER_REP_CMD(id, cmdid, baudrate)) {
+  if (dps->buff[idx++] != ICS_SER_REP_POS_CMD(id, cmdid, baudrate)) {
     return EILSEQ;
   }
 
@@ -132,9 +138,228 @@ errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos
   return EOK;
 }
 
+/*********************************************************************************************************************/
+
+#define ICS_MEM_CMD_REP_PKT_HEADER_SIZE 4 /* [byte] */
+
+static inline uint8_t mem_read_cmd_reppkt_size (uint8_t size) {
+  return (ICS_MEM_CMD_REP_PKT_HEADER_SIZE + ICS_VMEM_PAYLOAD_SIZE(size));
+}
+
+errno_t ics_ser_mem_read_cmd (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, size_t *serialized_size) {
+  EVALUE(NULL, ics);
+  ELTGT(ICS_VMEM_ADDR_MIN, ICS_VMEM_ADDR_MAX, start_addr);
+  ELEGT(0, ICS_VMEM_MAX_SIZE(start_addr), rsize);
+  EVALUE(NULL, serialized_size);
+
+  /* base class member */
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: max_size check
+
+  /*
+   * | _CMD | _SC_ | ADDR | BYTE |
+   */
+
+  size_t idx = 0;
+  dps->buff[idx++] = ICS_SER_REQ_GPCMD(id, ICS_CMD_GP_READ); /* _CMD */
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_VIRTRAM);   /* _SC_ */
+  dps->buff[idx++] = start_addr;
+  dps->buff[idx++] = rsize;
+
+  *serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_deser_mem_read_cmd (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, uint8_t data[/*rsize*/]) {
+  EVALUE(NULL, ics);
+  EVALUE(NULL, data);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t idx = 0;
+
+  /* reply data */
+  if (dps->buff[idx++] != ICS_SER_REQ_GPCMD(id, ICS_CMD_GP_READ) ||
+      dps->buff[idx++] != ICS_SER_REQ_SUBCMD(ICS_SCMD_VIRTRAM)   ||
+      dps->buff[idx++] != start_addr ||
+      dps->buff[idx++] != rsize) {
+    return EILSEQ;
+  }
+
+  for (size_t i = 0; i < rsize; i++) {
+    ICS_VMEM_DESER_PAYLOAD(dps->buff, idx, data, i);
+  }
+
+  return EOK;
+}
+
+errno_t ics_write_mem_read_req (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t size;
+
+  ECALL(ics_ser_mem_read_cmd(ics, id, start_addr, rsize, &size));
+  ECALL(data_dump(dps->buff, size));
+  ECALL(hr_serial_write(dps->hrs, dps->buff, size));
+
+  return EOK;
+}
+
+errno_t ics_read_mem_read_rep (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, uint8_t data[/*rsize*/]) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t expected_pkt_size = mem_read_cmd_reppkt_size(rsize);
+
+  ECALL2(hr_serial_read(dps->hrs, dps->buff, expected_pkt_size), false);
+  ECALL(data_dump(dps->buff, expected_pkt_size));
+  ECALL(ics_deser_mem_read_cmd(ics, id, start_addr, rsize, data));
+
+  return EOK;
+}
+
+errno_t _ics_mem_read (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, uint8_t data[/*rsize*/]) {
+  EVALUE(NULL, ics);
+
+  ECALL(ics_write_mem_read_req(ics, id, start_addr, rsize));
+  ECALL2(ics_read_mem_read_rep(ics, id, start_addr, rsize, data), false);
+
+  return EOK;
+}
+
+errno_t ics_mem_read (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, uint8_t data[/*rsize*/]) {
+  EVALUE(NULL, ics);
+
+  const size_t max_count = ics->retry_count;
+  for (size_t i = 0; i < max_count; i++) {
+    errno_t eno = _ics_mem_read(ics, id, start_addr, rsize, data);
+    if (eno == EOK) {
+      break;
+    }
+    printf("--- id:%02d size:%d data[0]:%04x \n", id, rsize, data[0]);
+  }
+
+  return EOK;
+}
+
+/*********************************************************************************************************************/
+
+static inline uint8_t mem_write_cmd_reppkt_size (void) {
+  return (ICS_MEM_CMD_REP_PKT_HEADER_SIZE);
+}
+
+errno_t ics_ser_mem_write_cmd (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, uint8_t data[/*wsize*/], size_t *serialized_size) {
+  EVALUE(NULL, ics);
+  ELTGT(ICS_VMEM_ADDR_MIN, ICS_VMEM_ADDR_MAX, start_addr);
+  ELEGT(0, ICS_VMEM_MAX_SIZE(start_addr), wsize);
+  EVALUE(NULL, serialized_size);
+  EVALUE(NULL, data);
+
+  /* base class member */
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: max_size check
+
+  /*
+   * | _CMD | _SC_ | ADDR | BYTE | PAYLOAD (2 * BYTE [byte]) |
+   */
+
+  size_t idx = 0;
+  dps->buff[idx++] = ICS_SER_REQ_GPCMD(id, ICS_CMD_GP_WRITE); /* _CMD */
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_VIRTRAM);    /* _SC_ */
+  dps->buff[idx++] = start_addr;
+  dps->buff[idx++] = wsize;
+
+  for (size_t i = 0; i < wsize; i++) {
+    ICS_VMEM_SER_PAYLOAD(dps->buff, idx, data, i);
+  }
+
+  *serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_deser_mem_write_cmd (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize) {
+  EVALUE(NULL, ics);
+  ELTGT(ICS_VMEM_ADDR_MIN, ICS_VMEM_ADDR_MAX, start_addr);
+  ELEGT(0, ICS_VMEM_MAX_SIZE(start_addr), wsize);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t idx = 0;
+
+  /* reply data */
+  if (dps->buff[idx++] != ICS_SER_REQ_GPCMD(id, ICS_CMD_GP_WRITE) ||
+      dps->buff[idx++] != ICS_SER_REQ_SUBCMD(ICS_SCMD_VIRTRAM)    ||
+      dps->buff[idx++] != start_addr ||
+      dps->buff[idx++] != wsize) {
+    return EILSEQ;
+  }
+
+  return EOK;
+}
+
+errno_t ics_write_mem_write_req (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, uint8_t data[/*wsize*/]) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t size;
+
+  ECALL(ics_ser_mem_write_cmd(ics, id, start_addr, wsize, data, &size));
+  ECALL(data_dump(dps->buff, size));
+  ECALL(hr_serial_write(dps->hrs, dps->buff, size));
+
+  return EOK;
+}
+
+errno_t ics_read_mem_write_rep (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t expected_pkt_size = mem_write_cmd_reppkt_size();
+
+  ECALL2(hr_serial_read(dps->hrs, dps->buff, expected_pkt_size), false);
+  ECALL(data_dump(dps->buff, expected_pkt_size));
+  ECALL(ics_deser_mem_write_cmd(ics, id, start_addr, wsize));
+
+  return EOK;
+}
+
+errno_t _ics_mem_write (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, uint8_t data[/*wsize*/]) {
+  EVALUE(NULL, ics);
+
+  ECALL(ics_write_mem_write_req(ics, id, start_addr, wsize, data));
+  ECALL2(ics_read_mem_write_rep(ics, id, start_addr, wsize), false);
+
+  return EOK;
+}
+
+errno_t ics_mem_write (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, uint8_t data[/*wsize*/]) {
+  EVALUE(NULL, ics);
+
+  const size_t max_count = ics->retry_count;
+  for (size_t i = 0; i < max_count; i++) {
+    errno_t eno = _ics_mem_write(ics, id, start_addr, wsize, data);
+    if (eno == EOK) {
+      break;
+    }
+    printf("--- id:%02d size:%d data[0]:%04x \n", id, wsize, data[0]);
+  }
+
+  return EOK;
+}
+
+/*********************************************************************************************************************/
+
 errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, size_t *serialized_size) {
   EVALUE(NULL, ics);
-  //EVALUE(NULL, data);
   EVALUE(NULL, serialized_size);
 
   dpservo_base *dps = get_dpservo_base(ics);
@@ -243,9 +468,6 @@ static errno_t set_goal (dpservo_base *dps, uint8_t id, float64_t goal) {
   return EOK;
 }
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
-#include "time/hr_unixtime.h"
-#endif
 static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]) {
   EVALUE(NULL, dps);
 
@@ -275,15 +497,13 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
 
 static errno_t write_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
   EVALUE(NULL, dps);
-  fprintf(stderr, "%s:%s:%d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
-  //ECALL(rsx_spkt_mem_write((rsx*)dps, id, start_addr, size, data));
+  ECALL(ics_mem_write((ics*)dps, id, start_addr, size, data));
   return EOK;
 }
 
 static errno_t read_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
   EVALUE(NULL, dps);
-  fprintf(stderr, "%s:%s:%d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
-  //ECALL(rsx_spkt_mem_read((rsx*)dps, id, start_addr, size, data));
+  ECALL(ics_mem_read((ics*)dps, id, start_addr, size, data));
   return EOK;
 }
 
