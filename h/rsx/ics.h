@@ -89,13 +89,10 @@ typedef struct {
 } ics;
 
 errno_t ics_init (ics *ics);
-//errno_t ics_ser_set_pos_cmd (rsx *rsx, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
-errno_t ics_ser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size);
-errno_t ics_deser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, ICS_UART_RATE baudrate);
+//errno_t ics_ser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size);
+//errno_t ics_deser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, ICS_UART_RATE baudrate);
 
-errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, size_t *serialized_size);
-errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[]);
-//errno_t ics_ser_get_param_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, size_t *serialized_size);
-//errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
+//errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, size_t *serialized_size);
+//errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[]);
 
 #endif
