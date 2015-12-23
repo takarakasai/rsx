@@ -12,17 +12,19 @@
 #define DPS_SERVO_ID_INVALID 0xFF
 #define DPS_SERVO_ID_MAX     0xFE /* 254 */
 
-#define DPSERVO_STRUCT(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
-  struct dps_struct {                                                          \
-    PROTOCOL_DECL_MACRO(child, num_of_servo);                                  \
-    HR_SERIAL_DECL(hrs);                                                       \
-    uint8_t   ids  [num_of_servo];                                             \
-    float64_t oang [num_of_servo];                                             \
-    uint8_t   buff [max_data_size];                                            \
+#define DPSERVO_STRUCT_TYPE(name) struct name ## _dps_struct
+
+#define DPSERVO_STRUCT(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
+  DPSERVO_STRUCT_TYPE(name) {                                                      \
+    PROTOCOL_DECL_MACRO(child, max_num_of_servo);                                  \
+    HR_SERIAL_DECL(hrs);                                                           \
+    uint8_t   ids  [max_num_of_servo];                                             \
+    float64_t oang [max_num_of_servo];                                             \
+    uint8_t   buff [max_data_size];                                                \
   }
 
-#define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)                 \
-  DPSERVO_STRUCT(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) name ## _dps_struct; \
+#define DPSERVO_DECL(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)                  \
+  DPSERVO_STRUCT(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) name ## _dps_struct; \
   dpservo_base *name
 
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)                               \
@@ -36,6 +38,20 @@
    (name ## _dps_struct.buff),                                                 \
    &(name));                                                                   \
   PROTOCOL_INIT_MACRO(name ## _dps_struct.child)
+
+#define DPSERVO_PTR_INIT(ptr, PROTOCOL_INIT_MACRO)                             \
+  HR_SERIAL_INIT((ptr)->hrs);                                     \
+  dpservo_init(                                                                \
+   get_dpservo_base(&((ptr)->child)), &((ptr)->hrs), \
+   sizeof((ptr)->ids) / sizeof((ptr)->ids[0]),       \
+   ((ptr)->ids),                                                  \
+   ((ptr)->oang),                                                 \
+   sizeof((ptr)->buff) / sizeof((ptr)->buff[0]),     \
+   ((ptr)->buff),                                                 \
+   (ptr));                                                                   \
+  PROTOCOL_INIT_MACRO((ptr)->child)
+
+
 
 #if 0
 #define DPSERVO_DECL(name, num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)   \
