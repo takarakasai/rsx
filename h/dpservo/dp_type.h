@@ -23,5 +23,7 @@ typedef char char8_t;
 
 static const errno_t eok = EOK;
 
+typedef int32_t dps_opt_t;
+
 #endif
 
