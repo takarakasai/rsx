@@ -7,6 +7,12 @@
 
 #include "dp_type.h"
 
+#define EXPECT_VALUE_ERRNO(value, variable, errno) \
+  if ((value) != (variable)) {      \
+    fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);        \
+    return errno;              \
+  }
+
 #define EVALUE_ERRNO(value, variable, errno) \
   if ((value) == (variable)) {      \
     fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);        \
