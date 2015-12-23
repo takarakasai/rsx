@@ -86,8 +86,8 @@ typedef errno_t (*dps_set_state_op)(dpservo_base *dps, const uint8_t id, dps_ser
 typedef errno_t (*dps_set_states_op)(dpservo_base *dps, dps_servo_state state);
 typedef errno_t (*dps_set_goal_op)(dpservo_base *dps, const uint8_t id, float64_t goal);
 typedef errno_t (*dps_set_goals_op)(dpservo_base *dps, const size_t num, float64_t goal[/*num*/]);
-typedef errno_t (*dps_write_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]);
-typedef errno_t (*dps_read_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]);
+typedef errno_t (*dps_write_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option);
+typedef errno_t (*dps_read_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option);
 
 typedef struct {
   dps_set_state_op set_state;
@@ -325,15 +325,15 @@ static inline errno_t dps_set_goals (dpservo_base *dps, const size_t num, float6
   return EOK;
 }
 
-static inline errno_t dps_mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/]) {
+static inline errno_t dps_mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/], int32_t option) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.write_mem(dps, id, start_addr, size, data));
+  ECALL(dps->ops.write_mem(dps, id, start_addr, size, data, option));
   return EOK;
 }
 
-static inline errno_t dps_mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/]) {
+static inline errno_t dps_mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/], int32_t option) {
   EVALUE(NULL, dps);
-  ECALL(dps->ops.read_mem(dps, id, start_addr, size, data));
+  ECALL(dps->ops.read_mem(dps, id, start_addr, size, data, option));
   return EOK;
 }
 

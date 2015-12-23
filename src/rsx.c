@@ -297,13 +297,13 @@ errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]) {
   return EOK;
 }
 
-static errno_t write_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+static errno_t write_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(rsx_spkt_mem_write((rsx*)dps, id, start_addr, size, data));
   return EOK;
 }
 
-static errno_t read_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+static errno_t read_mem (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(rsx_spkt_mem_read((rsx*)dps, id, start_addr, size, data));
   return EOK;

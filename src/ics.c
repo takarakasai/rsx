@@ -2,7 +2,12 @@
 #include "rsx.h"
 #include "ics.h"
 
+#include "ics_type.h"
+
+#include "mmap/ics3x.h"
+
 #include <unistd.h>
+#include <string.h>
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"
@@ -371,12 +376,12 @@ errno_t ics_mem_write (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, 
 
 #define ICS_GET_PARAM_CMD_REP_PKT_HEADER_SIZE 2 /* [byte] */
 
-static inline uint8_t get_param_reppkt_size (uint8_t scmdid) {
+static inline uint8_t get_param_reppkt_size (uint8_t scmdid, ics_opt_t option) {
 
   uint8_t size = ICS_GET_PARAM_CMD_REP_PKT_HEADER_SIZE;
 
   switch (scmdid) {
-    case ICS_SCMD_EEPROM:  size += ICS_EEPROM_SIZE; break;
+    case ICS_SCMD_EEPROM:  size += ICS_VMEM_PAYLOAD_SIZE(ics_get_eeprom_size(option)); break;
     case ICS_SCMD_STRETCH:
     case ICS_SCMD_SPEED:
     case ICS_SCMD_CURRENT:
@@ -404,7 +409,7 @@ errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, size_t *ser
   return EOK;
 }
 
-errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[]) {
+errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[], ics_opt_t option) {
   EVALUE(NULL, ics);
   //EVALUE(NULL, data);
   //EVALUE(NULL, serialized_size);
@@ -428,10 +433,9 @@ errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t s
   switch (scmdid) {
     case ICS_SCMD_EEPROM:
     {
-      EVALUE(size, idx + ICS_EEPROM_SIZE);
-      //EVALUE(max_size, ICS_EEPROM_SIZE); TODO: range check
-      for (size_t i = 0; i < ICS_EEPROM_SIZE; i++) {
-        rdata[i] = dps->buff[idx++];
+      // TODO: range check
+      for (size_t i = 0; i < ics_get_eeprom_size(option); i++) {
+        ICS_VMEM_DESER_PAYLOAD(dps->buff, idx, rdata, i);
       }
     }
       break;
@@ -466,36 +470,36 @@ errno_t ics_write_get_param_req (ics *ics, uint8_t id) {
   return EOK;
 }
 
-errno_t ics_read_get_param_rep (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/]) {
+errno_t ics_read_get_param_rep (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/], ics_opt_t option) {
   EVALUE(NULL, ics);
 
   dpservo_base *dps = get_dpservo_base(ics);
 
-  size_t expected_pkt_size = get_param_reppkt_size(ICS_SCMD_EEPROM);
+  size_t expected_pkt_size = get_param_reppkt_size(ICS_SCMD_EEPROM, option);
 
   ECALL2(hr_serial_read(dps->hrs, dps->buff, expected_pkt_size), true);
   ECALL(data_dump(dps->buff, expected_pkt_size));
-  ECALL(ics_deser_get_param_cmd(ics, id, ICS_SCMD_EEPROM, max_size, data));
+  ECALL(ics_deser_get_param_cmd(ics, id, ICS_SCMD_EEPROM, max_size, data, option));
 
   return EOK;
 }
 
-errno_t _ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/]) {
+errno_t _ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/], ics_opt_t option) {
   EVALUE(NULL, ics);
 
   ECALL(ics_write_get_param_req(ics, id));
   usleep(30 * 1000); /* at least 8[msec] */
-  ECALL2(ics_read_get_param_rep(ics, id, max_size, data), false);
+  ECALL2(ics_read_get_param_rep(ics, id, max_size, data, option), false);
 
   return EOK;
 }
 
-errno_t ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/]) {
+errno_t ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*max_size*/], ics_opt_t option) {
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_get_param(ics, id, max_size, data);
+    errno_t eno = _ics_get_param(ics, id, max_size, data, option);
     if (eno == EOK) {
       break;
     }
@@ -505,21 +509,31 @@ errno_t ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*ma
   return EOK;
 }
 
-static errno_t servo_mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t rsize, uint8_t data[/*rsize*/]) {
+static errno_t servo_mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t rsize, uint8_t data[/*rsize*/], dps_opt_t option) {
   EVALUE(NULL, dps);
+  EVALUE(NULL, data);
 
-  uint8_t tmp_data[ICS_EEPROM_SIZE] = {0};
+  const size_t eeprom_size = ics_get_eeprom_size(option);
+  EVALUE(0, eeprom_size);
 
-  ECALL(ics_get_param((ics*)dps, id, ICS_EEPROM_SIZE, tmp_data));
+  ELTGT(ICS_VMEM_ADDR_MIN, eeprom_size, start_addr);
+  ELEGT(0, (eeprom_size - start_addr), rsize);
+  uint8_t eeprom[eeprom_size];
 
-  for (size_t i = 0; i < ICS_EEPROM_SIZE; i++) {
+  ECALL(ics_get_param((ics*)dps, id, eeprom_size, eeprom, option));
+
+  memcpy(data, eeprom + start_addr, rsize);
+
+#if defined(DEBUG)
+  for (size_t i = 0; i < eeprom_size; i++) {
     if (i % 16 == 0) {
       printf("\n");
       printf(" 0x%02x :", (uint8_t)i);
     }
-    printf(" %02x", tmp_data[i]);
+    printf(" %02x", eeprom[i]);
   }
   printf("\n");
+#endif
 
   return EOK;
 }
@@ -600,13 +614,13 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
   return EOK;
 }
 
-static errno_t mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+static errno_t mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   //ECALL(ics_mem_write((ics*)dps, id, start_addr, size, data));
   return EOK;
 }
 
-static errno_t mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/]) {
+static errno_t mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(ics_mem_read((ics*)dps, id, start_addr, size, data));
   return EOK;
