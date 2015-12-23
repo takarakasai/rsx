@@ -33,7 +33,7 @@
 #define ICS_REP_CMD_MSB_ICS30(data)         (data)  // MSB:as is
 #define ICS_REP_CMD_MSB_ICS35(data) (0x7F & (data)) // MSB:0
 #define ICS_SER_REQ_CMD(servoid, cmdid) ((servoid & 0x1F) | (cmdid & 0xE0))
-#define ICS_SER_REP_CMD(servoid, cmdid, baudrate) \
+#define ICS_SER_REP_CMD(servoid, cmdid) \
   ICS_REP_CMD_MSB_ICS35(ICS_SER_REQ_CMD(servoid, cmdid))
 
 #define ICS_SER_REQ_SUBCMD(scmdid) (scmdid)
@@ -92,8 +92,10 @@ errno_t ics_init (ics *ics);
 //errno_t ics_ser_set_pos_cmd (rsx *rsx, uint8_t id, uint8_t cmdid, uint16_t pos, uint8_t max_size, uint8_t data[/*max_size*/], size_t *serialized_size);
 errno_t ics_ser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size);
 errno_t ics_deser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, ICS_UART_RATE baudrate);
-errno_t ics_ser_get_param_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, size_t *serialized_size);
-//errno_t ics_deser_get_param_cmd (uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t size, uint8_t data[/*max_size*/], uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
-errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
+
+errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, size_t *serialized_size);
+errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[]);
+//errno_t ics_ser_get_param_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, size_t *serialized_size);
+//errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint8_t scmdid, uint8_t max_size, uint8_t rdata[], ICS_UART_RATE baudrate);
 
 #endif
