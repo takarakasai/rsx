@@ -100,12 +100,12 @@ namespace dp {
     /*** servo memory write/read ***/
 
     errno_t write_mem (const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/]) {
-      ECALL(dps_write_mem(pservo, id, start_addr, size, data));
+      ECALL(dps_mem_write(pservo, id, start_addr, size, data));
       return EOK;
     }
     
     errno_t read_mem (const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/]) {
-      ECALL(dps_read_mem(pservo, id, start_addr, size, data));
+      ECALL(dps_mem_write(pservo, id, start_addr, size, data));
       return EOK;
     }
 
