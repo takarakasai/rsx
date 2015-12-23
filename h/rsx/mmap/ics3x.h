@@ -2,6 +2,17 @@
 #ifndef ICS3X_H
 #define ICS3X_H
 
+#include "ics_type.h"
+
+#define ICS30_EEPROM_SIZE 0x1D /* 58 [byte] */
+#define ICS35_EEPROM_SIZE 0x20 /* 64 [byte] */
+
+static const ics_opt_t kICS_VER_MASK = 0x3;
+
+#define ICS_VER_20 0x01 /* not implemented */
+#define ICS_VER_30 0x02
+#define ICS_VER_35 0x03
+
 typedef enum {
   ICS30_ROM_PUNCH          = 0x03,
   ICS30_ROM_DEAD_BAND      = 0x04,
@@ -49,6 +60,15 @@ typedef enum {
   ICS35_ROM_C_CHG_STRETCH2 = 0x1E,
   ICS35_ROM_C_CHG_STRETCH3 = 0x1F
 } ICS35_MEM_ADDR;
+
+static inline size_t ics_get_eeprom_size (dps_opt_t option) {
+  switch (kICS_VER_MASK & option) {
+    case ICS_VER_30: return ICS30_EEPROM_SIZE;
+    case ICS_VER_35: return ICS35_EEPROM_SIZE;
+    default:         return ICS30_EEPROM_SIZE;
+  }
+  return 0;
+}
 
 #endif
 
