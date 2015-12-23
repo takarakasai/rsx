@@ -53,11 +53,13 @@ int main(int argc, char *argv[]) {
 
   ECALL(dps_set_serial(servo, use_serial));
 
-  uint8_t data[1];
-  ECALL(dps_mem_read(servo, 2, start_addr, 1, data));
-  printf("=====> data[0] : %02x\n", data[0]);
-
-  //ECALL(ics_mem_write
+  const size_t rsize = 10;
+  uint8_t data[rsize];
+  ECALL(dps_mem_read(servo, 2, start_addr, rsize, data, ICS_VER_30));
+  for (size_t i = 0; i < rsize; i++) {
+    printf(" %02x", data[i]);
+  }
+  printf("\n");
 
   ECALL(dps_close(servo));
 
