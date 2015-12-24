@@ -1,10 +1,9 @@
 
-#include "rsx.h"
-#include "ics.h"
+#include "ics/ics.h"
 
-#include "ics_type.h"
+#include "ics/ics_type.h"
 
-#include "mmap/ics3x.h"
+#include "ics/mmap/ics3x.h"
 
 #include <unistd.h>
 #include <string.h>

@@ -5,8 +5,11 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx_pkt.h"
-#include "rsx_io.h"
+/* for datadump */
+#include "dpservo.h"
+
+#include "rsx/rsx_pkt.h"
+#include "rsx/rsx_io.h"
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"

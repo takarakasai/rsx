@@ -337,5 +337,19 @@ static inline errno_t dps_mem_read (dpservo_base *dps, const uint8_t id, uint8_t
   return EOK;
 }
 
+static inline errno_t data_dump (uint8_t *data, size_t size) {
+  EVALUE(NULL, data);
+
+#if defined(DATA_DUMP)
+  printf("size:%04zd ::", size);
+  for (size_t i = 0; i < size; i++) {
+    printf(" %02x", data[i]);
+  }
+  printf("\n");
+#endif
+
+  return EOK;
+}
+
 #endif
 

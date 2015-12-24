@@ -1,5 +1,5 @@
 
-#include "rsx.h"
+#include "rsx/rsx.h"
 
 #include "stdio.h"
 
@@ -259,7 +259,7 @@ static inline errno_t servo_state_dps2rsx (dps_servo_state istate, uint8_t *osta
 }
 
 // TODO:
-#include "mmap/rs30x.h"
+#include "rsx/mmap/rs30x.h"
 
 errno_t set_state (dpservo_base *dps, uint8_t id, dps_servo_state state) {
   EVALUE(NULL, dps);

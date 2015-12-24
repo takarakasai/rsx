@@ -1,5 +1,5 @@
 
-#include "rsx_pkt.h"
+#include "rsx/rsx_pkt.h"
 
 /* for error print */
 #include <stdio.h>

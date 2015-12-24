@@ -6,8 +6,11 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "rsx.h"
-#include "mmap/rs30x.h"
+/* for datadump */
+#include "dpservo.h"
+
+#include "rsx/rsx.h"
+#include "rsx/mmap/rs30x.h"
 
 static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
   EVALUE(NULL, servo);

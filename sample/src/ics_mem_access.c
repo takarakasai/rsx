@@ -8,9 +8,9 @@
 /* for strtoul */
 #include <stdlib.h>
 
-#include "ics.h"
+#include "ics/ics.h"
 
-#include "mmap/ics3x.h"
+#include "ics/mmap/ics3x.h"
 
 /*
  * ./build/sample/ics_test ttyUSB 0 low 255 -30 30 

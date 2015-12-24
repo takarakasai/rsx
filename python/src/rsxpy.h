@@ -2,7 +2,7 @@
 #ifndef RSXPY_H
 #define RSXPY_H
 
-#include "rsxpp.h"
+#include "rsxpp/rsxpp.h"
 
 #include "boost/python.hpp"
 

@@ -2,7 +2,7 @@
 #ifndef ICS3X_H
 #define ICS3X_H
 
-#include "ics_type.h"
+#include "ics/ics_type.h"
 
 static const ics_opt_t kICS_VER_MASK = 0x3;
 

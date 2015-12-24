@@ -5,7 +5,7 @@
 #include "servo.h" /* base class */
 
 extern "C" {
-  #include "rsx.h"
+  #include "rsx/rsx.h"
   #include "serial/hr_serial.h"
 }
 

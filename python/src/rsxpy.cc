@@ -1,7 +1,9 @@
 
 #include "rsxpy.h"
 
-#include "mmap/rs30x.h"
+extern "C" {
+  #include "rsx/mmap/rs30x.h"
+}
 
 #include <boost/python.hpp>
 //#include <boost/numpy.hpp>
