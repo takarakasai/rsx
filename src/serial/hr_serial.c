@@ -13,7 +13,12 @@
 /* for usleep */
 #include <unistd.h>
 
-#define ICS
+#if defined(TERMIOS2)
+/* we can not include sys/ioctl.h. because struct winsize is duplicated
+ * in termios.h and ioctl.h */
+extern int ioctl (int __fd, unsigned long int __request, ...) __THROW;
+extern int tcflush(int fd, int queue_selector);
+#endif
 
 static const size_t timeout_usec = 200; // TODO: ICS --> 100 | RSX --> 200
 static const size_t wait_usec    = 10;
@@ -26,12 +31,6 @@ static errno_t setraw(TERMIOS *term) {
   term->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
   term->c_cflag &= ~(CSIZE | CRTSCTS);          /* flag off */
   term->c_cflag |= CS8;
-
-  /// TODO:AAA
-  //term->c_cflag &= ~CBAUD; // ~0|010017 --> ~0b 0 001 000 000 001 111 --> 0b 1 110 111 111 110 000
-  //term->c_cflag |= BOTHER; //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
-  //term->c_ispeed = 1250000;
-  //term->c_ospeed = 1250000;
 
   return EOK;
 }
@@ -215,7 +214,6 @@ static errno_t setattr (int fd, TERMIOS *term) {
 
   int eno;
 
-  // TODO:AAA
   eno = tcflush(fd, TCIFLUSH);
   if (eno != 0) {
     printf("file can not tcflush : %d\n", errno);
