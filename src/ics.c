@@ -579,7 +579,7 @@ errno_t ics_ser_set_param_cmd (
   //TODO: max_size check
 
   size_t idx = 0;
-  dps->buff[idx++] = ICS_SER_REQ_CMD(id, ICS_CMD_GP_READ);
+  dps->buff[idx++] = ICS_SER_REQ_CMD(id, ICS_CMD_GP_WRITE);
   dps->buff[idx++] = ICS_SER_REQ_SUBCMD(scmdid);
 
   switch (scmdid) {
@@ -628,7 +628,7 @@ errno_t ics_deser_set_param_cmd (
 #endif
 
   /* reply data */
-  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(id, ICS_CMD_GP_READ), EILSEQ);
+  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(id, ICS_CMD_GP_WRITE), EILSEQ);
   EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REQ_SUBCMD(scmdid), EILSEQ);
 
   switch (scmdid) {
@@ -684,7 +684,7 @@ errno_t _ics_set_param (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsi
   EVALUE(NULL, ics);
 
   ECALL(ics_write_set_param_req(ics, id, wsize, wdata, option));
-  usleep(30 * 1000); /* at least 8[msec] */
+  usleep(1000 * 1000); /* at least 8[msec] */
   ECALL2(ics_read_set_param_rep(ics, id, wsize, wdata, option), false);
 
   return EOK;
@@ -730,6 +730,17 @@ static errno_t servo_mem_write (
       eeprom[addr] = data[i] & write_mask[addr];
     }
   }
+
+#if defined(DEBUG)
+  for (size_t i = 0; i < eeprom_size; i++) {
+    if (i % 16 == 0) {
+      printf("\n");
+      printf(" 0x%02x :", (uint8_t)i);
+    }
+    printf(" %02x(%02x)", eeprom[i], write_mask[i]);
+  }
+  printf("\n");
+#endif
 
   ECALL(ics_set_param((ics*)dps, id, eeprom_size, eeprom, option));
 
