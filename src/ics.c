@@ -729,10 +729,19 @@ static errno_t servo_mem_write (
   const uint8_t *write_mask = NULL;
   ECALL(ics_get_eeprom_write_mask(option, &write_mask));
 
+  bool is_read_enable = true;
+
   for (size_t i = 0; i < wsize; i++) {
     size_t addr = start_addr + i;
+    const uint8_t new = data[i] & write_mask[addr];
+
+    /* when we change baudrate, then we can shall not receive reply pkt. */
+    if (addr == ICS_ROM_BAUDRATE && eeprom[addr] != new) {
+      is_read_enable = false;
+    }
+
     if (write_mask[addr]) {
-      eeprom[addr] = data[i] & write_mask[addr];
+      eeprom[addr] = new;
     }
   }
 
@@ -747,7 +756,11 @@ static errno_t servo_mem_write (
   printf("\n");
 #endif
 
-  ECALL(ics_set_param((ics*)dps, id, eeprom_size, eeprom, option));
+  if (is_read_enable) {
+    ECALL(ics_set_param((ics*)dps, id, eeprom_size, eeprom, option));
+  } else {
+    fprintf(stdout, " %s: you change baudrate, you must restart program with new baudrate.\n", __FUNCTION__);
+  }
 
   return EOK;
 }
