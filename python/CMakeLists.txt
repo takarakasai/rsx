@@ -16,4 +16,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
 link_libraries(dpservo ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 
 PYTHON_ADD_MODULE(${PROJECT_NAME} src/rsxpy.cc)
+PYTHON_ADD_MODULE(icspy src/icspy.cc)
 
