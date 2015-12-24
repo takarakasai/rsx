@@ -5,7 +5,7 @@
 #include "servo.h" /* base class */
 
 extern "C" {
-  #include "ics.h"
+  #include "ics/ics.h"
   #include "serial/hr_serial.h"
 }
 
@@ -23,9 +23,9 @@ namespace dp {
     }
 
     ~icspp(void) {
-      errno_t eno = rsx_close(pics);
+      errno_t eno = ics_close(pics);
       if (eno != EOK) {
-        fprintf(stderr, "rsx_close error at %s\n", __FUNCTION__);
+        fprintf(stderr, "ics_close error at %s\n", __FUNCTION__);
       }
     }
 
@@ -39,68 +39,61 @@ namespace dp {
       return EOK;
     }
 
-#if 0
-    errno_t spkt_write (void) {
-      ECALL(rsx_spkt_write(pics));
-      return EOK;
-    }
-
-    errno_t spkt_write_read (void) {
-      ECALL(rsx_spkt_write_read(pics));
-      return EOK;
-    }
-
-    errno_t lpkt_write (void) {
-      ECALL(rsx_lpkt_write(pics));
-      return EOK;
-    }
-
-    errno_t spkt_mem_write (uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
-      ECALL(rsx_spkt_mem_write(pics, id, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t spkt_mem_write_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
-      ECALL(rsx_spkt_mem_write_int16(pics, id, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
-      ECALL(rsx_spkt_mem_read(pics, id, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t spkt_mem_read_int16 (uint8_t id, uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
-      ECALL(rsx_spkt_mem_read_int16(pics, id, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t lpkt_mem_write (uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, uint8_t **data/*[num][size]*/) {
-      ECALL(rsx_lpkt_mem_write(pics, id, num, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t lpkt_mem_write_int16 (uint8_t id[/*num*/], uint8_t num, uint8_t start_addr, uint8_t size, int16_t **data/*[num][size]*/) {
-      ECALL(rsx_lpkt_mem_write_int16(pics, id, num, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t lpkt_mem_write_all (uint8_t id[/*num*/], uint8_t num , uint8_t start_addr, uint8_t size, uint8_t data[/*size*/]) {
-      ECALL(rsx_lpkt_mem_write_all(pics, id, num, start_addr, size, data));
-      return EOK;
-    }
-
-    errno_t lpkt_mem_write_int16_all (uint8_t id[/*num*/], uint8_t num , uint8_t start_addr, uint8_t size, int16_t data[/*size*/]) {
-      ECALL(rsx_lpkt_mem_write_int16_all(pics, id, num, start_addr, size, data));
-      return EOK;
-    }
-#endif
-
     errno_t set_serial (bool use_serial) {
-      ECALL(rsx_set_serial(pics, use_serial));
+      ECALL(ics_set_serial(pics, use_serial));
       return EOK;
     }
- 
+
+    errno_t set_id (uint8_t  id) {
+      ECALL(ics_set_id(pics, id));
+      return EOK;
+    }
+
+    errno_t get_id (uint8_t *id) {
+      ECALL(ics_get_id(pics, id));
+      return EOK;
+    }
+
+    errno_t set_stretch (uint8_t id, uint8_t stretch) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t get_stretch (uint8_t id, uint8_t *stretch) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t set_speed (uint8_t id, uint8_t  speed) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t get_speed (uint8_t id, uint8_t *speed) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t set_current_limit (uint8_t id, uint8_t cur_limit) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t get_current (uint8_t id, uint8_t *cur) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t set_temp_limit (uint8_t id, uint8_t temp_limit) {
+      /* not implemented yet */
+      return EOK;
+    }
+
+    errno_t get_temp (uint8_t id, uint8_t *temp) {
+      /* not implemented yet */
+      return EOK;
+    }
+
    protected: 
     DPSERVO_DECL(servo_inst, kNUM_OF_JOINTS, kMAX_PKT_SIZE, ICS_DECL);
     ics *pics;
