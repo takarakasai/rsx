@@ -689,7 +689,7 @@ errno_t _ics_set_param (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsi
   EVALUE(NULL, ics);
 
   ECALL(ics_write_set_param_req(ics, id, wsize, wdata, option));
-  usleep(1000 * 1000); /* at least 8[msec] */
+  usleep(1000 * 1000);
   ECALL2(ics_read_set_param_rep(ics, id, wsize, wdata, option), false);
 
   return EOK;
@@ -760,6 +760,214 @@ static errno_t servo_mem_write (
     ECALL(ics_set_param((ics*)dps, id, eeprom_size, eeprom, option));
   } else {
     fprintf(stdout, " %s: you change baudrate, you must restart program with new baudrate.\n", __FUNCTION__);
+  }
+
+  return EOK;
+}
+
+/*********************************************************************************************************************/
+/* servo specific. id read/write */
+
+#define ICS_SET_ID_CMD_REP_PKT_SIZE 1 /* [byte] */
+
+errno_t ics_ser_set_id_cmd (
+        ics *ics, uint8_t id, size_t *serialized_size)
+{
+  EVALUE(NULL, ics);
+  EVALUE(NULL, serialized_size);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: max_size check
+
+  /* | _CMD | _SC_ | _SC_ | _SC_ | */
+
+  size_t idx = 0;
+  dps->buff[idx++] = ICS_SER_REQ_CMD(id, ICS_CMD_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_SET_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_SET_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_SET_ID);
+
+  *serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_deser_set_id_cmd (
+        ics *ics, uint8_t id)
+{
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: size / max_size check
+
+  size_t idx = 0;
+
+  /* | _CMD | */
+
+  /* reply data */
+  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(id, ICS_CMD_ID), EILSEQ);
+
+  //*serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_write_set_id_req (ics *ics, uint8_t id) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t size;
+
+  ECALL(ics_ser_set_id_cmd(ics, id, &size));
+  ECALL(data_dump(dps->buff, size));
+  ECALL(hr_serial_write(dps->hrs, dps->buff, size));
+
+  return EOK;
+}
+
+errno_t ics_read_set_id_rep (ics *ics, uint8_t id) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  const size_t expected_pkt_size = ICS_SET_ID_CMD_REP_PKT_SIZE;
+
+  ECALL2(hr_serial_read(dps->hrs, dps->buff, expected_pkt_size), true);
+  ECALL(data_dump(dps->buff, expected_pkt_size));
+  ECALL(ics_deser_set_id_cmd(ics, id));
+
+  return EOK;
+}
+
+errno_t _ics_set_id (ics *ics, uint8_t id) {
+  EVALUE(NULL, ics);
+
+  ECALL(ics_write_set_id_req(ics, id));
+  usleep(100 * 1000);
+  ECALL2(ics_read_set_id_rep(ics, id), false);
+
+  return EOK;
+}
+
+errno_t ics_set_id (ics *ics, uint8_t id) {
+  EVALUE(NULL, ics);
+
+  const size_t max_count = ics->retry_count;
+  for (size_t i = 0; i < max_count; i++) {
+    errno_t eno = _ics_set_id(ics, id);
+    if (eno == EOK) {
+      break;
+    }
+    printf(" set_id --- id:%02d \n", id);
+  }
+
+  return EOK;
+}
+
+/*********************************************************************************************************************/
+
+#define ICS_GET_ID_CMD_REP_PKT_SIZE 1 /* [byte] */
+
+errno_t ics_ser_get_id_cmd (
+        ics *ics, size_t *serialized_size)
+{
+  EVALUE(NULL, ics);
+  EVALUE(NULL, serialized_size);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: max_size check
+
+  /* | _CMD | _SC_ | _SC_ | _SC_ | */
+
+  size_t idx = 0;
+  /* servo id should be ignore with ICS_SCMD_GET_ID */
+  dps->buff[idx++] = ICS_SER_REQ_CMD(ICS_SERVO_ID_INV, ICS_CMD_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_GET_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_GET_ID);
+  dps->buff[idx++] = ICS_SER_REQ_SUBCMD(ICS_SCMD_GET_ID);
+
+  *serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_deser_get_id_cmd (
+        ics *ics, uint8_t *id)
+{
+  EVALUE(NULL, ics);
+  EVALUE(NULL, id);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  //TODO: size / max_size check
+
+  size_t idx = 0;
+
+  /* | _CMD | */
+
+  /* reply data */
+  *id = dps->buff[idx++] & ICS_CMDID_MASK;
+  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(*id, ICS_CMD_ID), EILSEQ);
+
+  //*serialized_size = idx;
+
+  return EOK;
+}
+
+errno_t ics_write_get_id_req (ics *ics) {
+  EVALUE(NULL, ics);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  size_t size;
+
+  ECALL(ics_ser_get_id_cmd(ics, &size));
+  ECALL(data_dump(dps->buff, size));
+  ECALL(hr_serial_write(dps->hrs, dps->buff, size));
+
+  return EOK;
+}
+
+errno_t ics_read_get_id_rep (ics *ics, uint8_t *id) {
+  EVALUE(NULL, ics);
+  EVALUE(NULL, id);
+
+  dpservo_base *dps = get_dpservo_base(ics);
+
+  const size_t expected_pkt_size = ICS_GET_ID_CMD_REP_PKT_SIZE;
+
+  ECALL2(hr_serial_read(dps->hrs, dps->buff, expected_pkt_size), true);
+  ECALL(data_dump(dps->buff, expected_pkt_size));
+  ECALL(ics_deser_get_id_cmd(ics, id));
+
+  return EOK;
+}
+
+errno_t _ics_get_id (ics *ics, uint8_t *id) {
+  EVALUE(NULL, ics);
+
+  ECALL(ics_write_get_id_req(ics));
+  usleep(100 * 1000);
+  ECALL2(ics_read_get_id_rep(ics, id), false);
+
+  return EOK;
+}
+
+errno_t ics_get_id (ics *ics, uint8_t *id) {
+  EVALUE(NULL, ics);
+  EVALUE(NULL, id);
+
+  const size_t max_count = ics->retry_count;
+  for (size_t i = 0; i < max_count; i++) {
+    errno_t eno = _ics_get_id(ics, id);
+    if (eno == EOK) {
+      break;
+    }
+    printf(" get_id --- id:%02x \n", *id);
   }
 
   return EOK;
@@ -841,6 +1049,7 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
   return EOK;
 }
 
+
 static errno_t NOT_USED_FUNC mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(ics_mem_write((ics*)dps, id, start_addr, size, data));
@@ -857,7 +1066,6 @@ errno_t ics_init (ics *ics) {
   EVALUE(NULL, ics);
 
   dpservo_base *dps = get_dpservo_base(ics);
-  //ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, mem_write, mem_write));
   ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, servo_mem_write, servo_mem_read));
 
   ics->retry_count = 3;

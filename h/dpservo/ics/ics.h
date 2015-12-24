@@ -19,6 +19,7 @@
 
 #define ICS_SERVO_ID_MIN 0x00 //  0
 #define ICS_SERVO_ID_MAX 0x1F // 31
+#define ICS_SERVO_ID_INV 0xFF // invalid
 
 /* virtual memory address / size */
 #define ICS_VMEM_ADDR_MIN 0x00
@@ -59,7 +60,8 @@ typedef enum {
   ICS_CMD_REQ_WRITE_PARAM = 0xC0, /* 0b 110x xxxx */ // TODO: to be deleted, GP_WRITE should be used.
   ICS_CMD_GP_READ         = 0xA0, /* 0b 101x xxxx */
   ICS_CMD_GP_WRITE        = 0xC0, /* 0b 110x xxxx */
-  ICS_CMD_ID_SET          = 0xE0, /* 0b 111x xxxx */
+  ICS_CMD_ID              = 0xE0, /* 0b 111x xxxx */
+  ICS_CMDID_MASK          = 0x1F  /* 0b 111x xxxx */
 } ICS_CMDID;
 
 /* 
@@ -73,6 +75,14 @@ typedef enum {
   ICS_SCMD_TEMP    = 0x04,
   ICS_SCMD_VIRTRAM = 0x7F
 } ICS_SUB_CMDID;
+
+/* 
+ * following sub command id shall be used with ICS_CMD_GP_READ/ICS_CMD_GP_WRITE
+ */
+typedef enum {
+  ICS_SCMD_SET_ID = 0x00,
+  ICS_SCMD_GET_ID = 0x01,
+} ICS_SUB_IDCMD;
 
 typedef enum {
   ICS_UART_RATE_115200,
@@ -89,10 +99,8 @@ typedef struct {
 } ics;
 
 errno_t ics_init (ics *ics);
-//errno_t ics_ser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t pos, size_t *serialized_size);
-//errno_t ics_deser_set_pos_cmd (ics* ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, ICS_UART_RATE baudrate);
 
-//errno_t ics_ser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, size_t *serialized_size);
-//errno_t ics_deser_get_param_cmd (ics *ics, uint8_t id, uint8_t scmdid, uint8_t size, uint8_t rdata[]);
+errno_t ics_set_id (ics *ics, uint8_t  id);
+errno_t ics_get_id (ics *ics, uint8_t *id);
 
 #endif
