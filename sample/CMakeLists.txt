@@ -10,7 +10,7 @@ endif()
 
 set(APP_NAME rsx_app)
 
-set(DEPENDENCIES "rsx")
+set(DEPENDENCIES "dpservo")
 
 foreach(SRC ${SRCS})
   message(STATUS ${SRC})

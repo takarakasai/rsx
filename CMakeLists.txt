@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.4)
 
-project(rsx)
+project(dpservo)
 
 option(ENABLE_SAMPLE "enable to build sample app" ON)
 option(ENABLE_PYTHON_API "enable to build python api" OFF)
@@ -21,7 +21,6 @@ if(${HR_SERIAL_LATENCY_CHECK_DETAIL})
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
-include_directories(${PROJECT_SOURCE_DIR}/h/dpservo)
 
 file(GLOB SRCS "src/*.c")
 file(GLOB SERIAL_SRCS "src/serial/*.c")
@@ -51,7 +50,6 @@ endif()
 if(${UNIX})
     install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME} DESTINATION include)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/h/rsxpp DESTINATION include)
 elseif(${MINGW})
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${INSTALL_DIR})
 endif()
