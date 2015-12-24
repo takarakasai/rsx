@@ -76,6 +76,12 @@ BOOST_PYTHON_MODULE( dpspy ) {
       .value("RSX_RAM_PRESENT_VLT_H"   ,RSX_RAM_PRESENT_VLT_H) 
       ;
 
+  boost::python::enum_<ICS_VERSION>("ICS_VERSION")
+      .value("v20" , ICS_V20 )
+      .value("v30" , ICS_V30 )
+      .value("v35" , ICS_V35 )
+      ;
+
   boost::python::enum_<ICS_MEM_ADDR>("ICS_MEM_ADDR")
       .value("PUNCH"         , ICS_ROM_PUNCH         )
       .value("DEAD_BAND"     , ICS_ROM_DEAD_BAND     )

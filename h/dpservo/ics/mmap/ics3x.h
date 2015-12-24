@@ -10,6 +10,17 @@ static const ics_opt_t kICS_VER_MASK = 0x3;
 #define ICS_VER_30 0x02
 #define ICS_VER_35 0x03
 
+typedef enum {
+  ICS_V20 = ICS_VER_20,
+  ICS_V30 = ICS_VER_30,
+  ICS_V35 = ICS_VER_35,
+  ICS_VERSION_INVALID
+} ICS_VERSION;
+
+static inline ics_opt_t ics_ver2opt (ICS_VERSION version) {
+  return (ics_opt_t) version;
+}
+
 /* common address */
 typedef enum {
   ICS_ROM_PUNCH          = 0x03,

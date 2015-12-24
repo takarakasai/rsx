@@ -42,95 +42,52 @@ class servopy : public dp::servo {
   virtual ~servopy(void) {
   }
 
-#if 0
-  errno_t spkt_mem_write (uint8_t id, uint8_t start_addr, bp::list &in_data) {
-    GET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
+  errno_t set_servo (bp::list &in_data) {
+    GET_C_ARRAY(uint8_t, num, ids/*[num]*/, in_data);
 
-    ECALL(base::spkt_mem_write(id, start_addr, size, data));
+    ECALL(base::set_servo(num, ids));
     return EOK;
   }
 
-  errno_t spkt_mem_write_int16 (uint8_t id, uint8_t start_addr, bp::list &in_data) {
-    GET_C_ARRAY(int16_t, size, data/*[size]*/, in_data);
+  errno_t set_offset_angles (bp::list &in_data) {
+    GET_C_ARRAY(float64_t, num, oangle/*[num]*/, in_data);
 
-    ECALL(base::spkt_mem_write_int16(id, start_addr, size, data));
+    ECALL(base::set_offset_angles(num, oangle));
     return EOK;
   }
 
-  //errno_t spkt_mem_read (uint8_t id, uint8_t start_addr, bp::list &in_data) {
-  bp::list spkt_mem_read (uint8_t id, uint8_t start_addr, size_t num) {
-    uint8_t data[num];
-    //const uint8_t size = len(in_data);
-    //uint8_t data[size];
+  errno_t set_goals (bp::list &in_data) {
+    GET_C_ARRAY(float64_t, num, goal/*[num]*/, in_data);
 
-    //ECALL(base::spkt_mem_read(id, start_addr, size, data));
-    errno_t eno = base::spkt_mem_read(id, start_addr, num, data);
-    if (eno != EOK) {
-      throw eno;
-    }
-
-    boost::python::list plist;
-    for (size_t i = 0; i < num; i++) {
-      plist.append(data[i]);
-    }
-
-    //SET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
-
-    return plist;
+    ECALL(base::set_goals(num, goal));
+    return EOK;
   }
 
-  bp::list spkt_mem_read_int16 (uint8_t id, uint8_t start_addr, size_t num/* num * int16_t */) {
-    int16_t data[num];
+  errno_t write_mem (uint8_t id, uint8_t start_addr, bp::list &in_data, dps_opt_t option) {
+    GET_C_ARRAY(uint8_t, wsize, wdata/*[wsize]*/, in_data);
 
-    errno_t eno = base::spkt_mem_read_int16(id, start_addr, num, data);
-    if (eno != EOK) {
-      throw eno;
-    }
+    ECALL(base::write_mem(id, start_addr, wsize, wdata, option));
+
+    return EOK;
+  }
+
+  bp::list read_mem (uint8_t id, uint8_t start_addr, size_t rsize, dps_opt_t option) {
+    uint8_t rdata[rsize];
+
+    ECALL_THROW(base::read_mem(id, start_addr, rsize, rdata, option));
 
     boost::python::list plist;
-    for (size_t i = 0; i < num; i++) {
-      plist.append(data[i]);
+    for (size_t i = 0; i < rsize; i++) {
+      plist.append(rdata[i]);
     }
 
     return plist;
   }
-
-  errno_t lpkt_mem_write (bp::list &in_id, uint8_t start_addr, size_t size, bp::list &in_data) {
-    GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
-    GET_C_ARRAY_2D(uint8_t, num, size, data/*[num][size]*/, in_data);
-
-    ECALL(base::lpkt_mem_write(id, num, start_addr, size, (uint8_t**)data));
-    return EOK;
-  }
-
-  errno_t lpkt_mem_write_int16 (bp::list &in_id, uint8_t start_addr, size_t size, bp::list &in_data) {
-    GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
-    GET_C_ARRAY_2D(int16_t, num, size, data/*[num][size]*/, in_data);
-
-    ECALL(base::lpkt_mem_write_int16(id, num, start_addr, size, (int16_t**)data));
-    return EOK;
-  }
-
-  errno_t lpkt_mem_write_all (bp::list &in_id, uint8_t start_addr, bp::list &in_data) {
-    GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
-    GET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
-
-    ECALL(base::lpkt_mem_write_all(id, num, start_addr, size, data));
-    return EOK;
-  }
-
-  errno_t lpkt_mem_write_int16_all (bp::list &in_id, uint8_t start_addr, bp::list &in_data) {
-    GET_C_ARRAY(uint8_t, num, id/*[num]*/, in_id);
-    GET_C_ARRAY(int16_t, size, data/*[size]*/, in_data);
-
-    ECALL(base::lpkt_mem_write_int16_all(id, num, start_addr, size, data));
-    return EOK;
-  }
-#endif
 
  protected:
 
  private: 
+
   bp::list rdata;
 };
 
