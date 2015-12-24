@@ -21,7 +21,8 @@ namespace dp {
       pservo = nullptr;
     }
 
-    virtual ~servo(void) = 0;
+    virtual ~servo(void) {
+    }
 
     /*** com ***/
 
