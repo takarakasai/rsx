@@ -145,7 +145,13 @@ BOOST_PYTHON_MODULE( dpspy ) {
       .value("SIZE"          , ICS35_ROM_SIZE          ) 
       ;
 
-    boost::python::class_<servopy>("servopy")
+  boost::python::enum_<dps_servo_state>("dps_servo_state")
+      .value("off"           , kDpsServoOff)
+      .value("break"         , kDpsServoBrk)
+      .value("on"            , kDpsServoOn)
+      ;
+
+  boost::python::class_<servopy>("servopy")
       /* uart api */
       .def("open"              , &servo::open             )
       .def("close"             , &servo::close            )
