@@ -1,6 +1,6 @@
 #include "time/hr_unixtime.h"
 
-#include "rsx_err.h"
+#include "dp_err.h"
 
 typedef struct timespec hr_time;
 

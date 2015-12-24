@@ -5,7 +5,7 @@
 /* interface */
 #include "dpservo.h"
 
-#include "rsx_type.h"
+#include "dp_type.h"
 
 #include "rsx_pkt.h"
 // for hr_serial

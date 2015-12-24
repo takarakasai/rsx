@@ -1,7 +1,7 @@
 
 #include "serial/hr_unixio.h"
 
-#include "rsx_err.h"
+#include "dp_err.h"
 
 /* for error print */
 #include <stdio.h>
