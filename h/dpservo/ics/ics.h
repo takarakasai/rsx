@@ -100,6 +100,11 @@ typedef struct {
 
 errno_t ics_init (ics *ics);
 
+/* to be obsoluted */
+errno_t ics_open (ics *ics, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity);
+errno_t ics_close (ics *ics);
+errno_t ics_set_serial (ics *ics, bool use_serial);
+
 errno_t ics_set_id (ics *ics, uint8_t  id);
 errno_t ics_get_id (ics *ics, uint8_t *id);
 

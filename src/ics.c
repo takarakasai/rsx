@@ -1073,3 +1073,26 @@ errno_t ics_init (ics *ics) {
   return EOK;
 }
 
+/* to be obsoluted */
+errno_t ics_open (ics *ics, const char8_t *device, const char8_t *port, hr_baudrate baudrate, hr_parity parity){
+  EVALUE(NULL, ics);
+  if (ics->base.io_enabled) ECALL(hr_serial_open(ics->base.hrs, device, port, baudrate, parity));
+  return EOK;
+}
+
+errno_t ics_close (ics *ics) {
+  EVALUE(NULL, ics);
+  if (ics->base.io_enabled) ECALL(hr_serial_close(ics->base.hrs));
+  return EOK;
+}
+
+errno_t ics_set_serial (ics *ics, bool io_enabled) {
+  EVALUE(NULL, ics);
+
+  ics->base.io_enabled = io_enabled;
+
+  return EOK;
+}
+
+
+
