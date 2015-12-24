@@ -2,9 +2,13 @@
 #ifndef HR_SERIAL_H
 #define HR_SERIAL_H
 
+#define TERMIOS2
+
+#if defined(TERMIOS2)
+#include <asm/termios.h>
+#else
 #include <termios.h>
-// TODO:AAA
-//#include <asm/termios.h>
+#endif
 
 #include "hr_unixio.h"
 
@@ -51,14 +55,20 @@ static inline const char* hr_baudrate2str (hr_baudrate baudrate) {
   }
 }
 
+#if defined(TERMIOS2)
+typedef struct termios2 TERMIOS;
+#else
+typedef struct termios  TERMIOS;
+#endif
+
 typedef struct {
   int fd;
 
   //hr_parity   parity;
   hr_baudrate baudrate;
 
-  struct termios prev_term;
-  struct termios term;
+  TERMIOS prev_term;
+  TERMIOS term;
 } hr_serial;
 
 errno_t hr_serial_init (hr_serial *ser);

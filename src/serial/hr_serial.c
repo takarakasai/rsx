@@ -18,7 +18,7 @@
 static const size_t timeout_usec = 200; // TODO: ICS --> 100 | RSX --> 200
 static const size_t wait_usec    = 10;
 
-static errno_t setraw(struct termios *term) {
+static errno_t setraw(TERMIOS *term) {
   EVALUE(NULL, term);
 
   term->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
@@ -36,7 +36,7 @@ static errno_t setraw(struct termios *term) {
   return EOK;
 }
 
-static errno_t set_cflag (struct termios *term, tcflag_t parity) {
+static errno_t set_cflag (TERMIOS *term, tcflag_t parity) {
   EVALUE(NULL, term);
 
   term->c_cflag |= parity;                      /* flag on  */
@@ -44,7 +44,7 @@ static errno_t set_cflag (struct termios *term, tcflag_t parity) {
   return EOK;
 }
 
-static errno_t unset_cflag (struct termios *term, tcflag_t parity) {
+static errno_t unset_cflag (TERMIOS *term, tcflag_t parity) {
   EVALUE(NULL, term);
 
   term->c_cflag &= ~parity;                     /* flag off  */
@@ -52,7 +52,7 @@ static errno_t unset_cflag (struct termios *term, tcflag_t parity) {
   return EOK;
 }
 
-static errno_t set_parity (struct termios *term, hr_parity parity) {
+static errno_t set_parity (TERMIOS *term, hr_parity parity) {
   EVALUE(NULL, term);
 
   switch(parity) {
@@ -75,7 +75,8 @@ static errno_t set_parity (struct termios *term, hr_parity parity) {
   return EOK;
 }
 
-static errno_t _setspeed (struct termios *term, hr_baudrate baudrate) {
+#if !defined(TERMIOS2)
+static errno_t _setspeed (TERMIOS *term, hr_baudrate baudrate) {
   EVALUE(NULL, term);
 
   speed_t speed;
@@ -111,8 +112,10 @@ static errno_t _setspeed (struct termios *term, hr_baudrate baudrate) {
 
   return EOK;
 }
+#endif
 
-static errno_t _setspeed2 (struct termios *term, int speed) {
+#if defined(TERMIOS2)
+static errno_t _setspeed2 (TERMIOS *term, int speed) {
   EVALUE(NULL, term);
 
 #if 0
@@ -133,8 +136,8 @@ static errno_t _setspeed2 (struct termios *term, int speed) {
   }
 #endif
 
-  term->c_cflag &= ~CBAUD;   // ~0|010017 --> ~0b 0 001 000 000 001 111 --> 0b 1 110 111 111 110 000
-  //term->c_cflag |= BOTHER; //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
+  //term->c_cflag &= ~CBAUD;   // ~0|010017 --> ~0b 0 001 000 000 001 111 --> 0b 1 110 111 111 110 000
+  term->c_cflag |= BOTHER; //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
   term->c_cflag |= CBAUDEX;  //  0|010000 -->  0b 0 001 000 000 000 000 // CBAUDEX?
  
   term->c_ispeed = speed;
@@ -144,7 +147,40 @@ static errno_t _setspeed2 (struct termios *term, int speed) {
   return EOK;
 }
 
-static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
+static errno_t setspeed (TERMIOS *term, hr_baudrate baudrate) {
+  EVALUE(NULL, term);
+
+  switch (baudrate) {
+    case HR_B9600   :
+      ECALL(_setspeed2(term,    9600)); break;
+    case HR_B19200  :
+      ECALL(_setspeed2(term,   19200)); break;
+    case HR_B38400  :
+      ECALL(_setspeed2(term,   38400)); break;
+    case HR_B57600  :
+      ECALL(_setspeed2(term,   57600)); break;
+    case HR_B115200 :
+      ECALL(_setspeed2(term,  115200)); break;
+    case HR_B230400 :
+      ECALL(_setspeed2(term,  230400)); break;
+    case HR_B460800 :
+      ECALL(_setspeed2(term,  460800)); break;
+    case HR_B576000 :
+      ECALL(_setspeed2(term,  576000)); break;
+    case HR_B625000 :
+      ECALL(_setspeed2(term,  625000)); break;
+    case HR_B1152000:
+      ECALL(_setspeed2(term, 1152000)); break;
+    case HR_B1250000:
+      ECALL(_setspeed2(term, 1250000)); break;
+    default :
+      return EINVAL;
+  }
+
+  return EOK;
+}
+#else
+static errno_t setspeed (TERMIOS *term, hr_baudrate baudrate) {
   EVALUE(NULL, term);
 
   switch (baudrate) {
@@ -158,20 +194,22 @@ static errno_t setspeed (struct termios *term, hr_baudrate baudrate) {
     case HR_B576000 :
       ECALL(_setspeed(term, baudrate)); break;
     case HR_B625000 :
-      ECALL(_setspeed2(term,  625000)); break;
+      //ECALL(_setspeed2(term,  625000)); break;
+      return EINVAL;
     case HR_B1152000:
       ECALL(_setspeed(term, baudrate)); break;
     case HR_B1250000:
-      ECALL(_setspeed2(term, 1250000)); break;
+      //ECALL(_setspeed2(term, 1250000)); break;
+      return EINVAL;
     default :
       return EINVAL;
   }
 
   return EOK;
 }
+#endif
 
-
-static errno_t setattr (int fd, struct termios *term) {
+static errno_t setattr (int fd, TERMIOS *term) {
   EVALUE(0, fd);
   EVALUE(NULL, term);
 
@@ -184,9 +222,11 @@ static errno_t setattr (int fd, struct termios *term) {
     return errno;
   }
 
-  // TODO:AAA
+#if defined(TERMIOS2)
+  eno = ioctl(fd, TCSETS2, term);
+#else
   eno = tcsetattr(fd, TCSANOW, term);
-  //eno = ioctl(fd, TCSETS2, term);
+#endif
   if (eno != 0) {
     printf("file can not tcsetattr : %d\n", errno);
     return errno;
@@ -202,8 +242,8 @@ errno_t hr_serial_init (hr_serial *ser) {
 
   ser->baudrate = HR_B115200;
 
-  memset(&(ser->prev_term), 0, sizeof(struct termios));
-  memset(&(ser->term), 0, sizeof(struct termios));
+  memset(&(ser->prev_term), 0, sizeof(TERMIOS));
+  memset(&(ser->term), 0, sizeof(TERMIOS));
 
   return EOK;
 }
@@ -230,9 +270,11 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_ba
 
   ECALL(_open(path, &(ser->fd)));
 
-  //TODO:AAA
+#if defined(TERMIOS2)
+  ioctl(ser->fd, TCGETS2, &(ser->prev_term));
+#else
   tcgetattr(ser->fd, &(ser->prev_term)); /* 現在のポート設定を待避 */
-  //ioctl(ser->fd, TCGETS2, &(ser->prev_term));
+#endif
 
   ECALL(setraw(&(ser->term)));
 
