@@ -12,6 +12,12 @@
 #include "time/hr_unixtime.h"
 #endif
 
+#ifdef __GNUC__
+#define NOT_USED_FUNC __attribute__ ((unused))
+#else
+#define NOT_USED_FUNC
+#endif
+
 /*
  * position:
  * TX : CMD POSH POSL
@@ -822,13 +828,13 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
   return EOK;
 }
 
-static errno_t mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
+static errno_t NOT_USED_FUNC mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(ics_mem_write((ics*)dps, id, start_addr, size, data));
   return EOK;
 }
 
-static errno_t mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
+static errno_t NOT_USED_FUNC mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(ics_mem_read((ics*)dps, id, start_addr, size, data));
   return EOK;
