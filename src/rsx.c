@@ -17,6 +17,14 @@ errno_t rsx_close (rsx *rsx) {
   return EOK;
 }
 
+errno_t rsx_set_serial (rsx *rsx, bool io_enabled) {
+  EVALUE(NULL, rsx);
+
+  rsx->base.io_enabled = io_enabled;
+
+  return EOK;
+}
+
 errno_t rsx_spkt_write (rsx *rsx) {
   EVALUE(NULL, rsx);
 
@@ -76,14 +84,6 @@ errno_t rsx_lpkt_write (rsx *rsx) {
   ECALL(data_dump(rsx->base.buff, pkt_size));
 
   if(rsx->base.io_enabled) ECALL(hr_serial_write(rsx->base.hrs, rsx->base.buff, pkt_size));
-
-  return EOK;
-}
-
-errno_t rsx_set_serial (rsx *rsx, bool io_enabled) {
-  EVALUE(NULL, rsx);
-
-  rsx->base.io_enabled = io_enabled;
 
   return EOK;
 }
