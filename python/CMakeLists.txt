@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.4)
 
-project(rsxpy)
+project(dpspy)
 
 find_package(PythonInterp)
 find_package(PythonLibs)
@@ -15,6 +15,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
 
 link_libraries(dpservo ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 
-PYTHON_ADD_MODULE(${PROJECT_NAME} src/rsxpy.cc)
-PYTHON_ADD_MODULE(icspy src/icspy.cc)
+PYTHON_ADD_MODULE(${PROJECT_NAME} src/dpservo.cc)
 

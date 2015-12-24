@@ -56,7 +56,19 @@
     }                       \
   } while(0)
 
+#define ECALL_THROW2(function, print_flg)     \
+  do {                      \
+    errno_t eno = function; \
+    if (eno != EOK) {       \
+        if (print_flg) {    \
+          fprintf(stderr, "--> %s %s %d eno:%d\n", __FILE__, __FUNCTION__, __LINE__, eno); \
+        }                   \
+      throw eno;            \
+    }                       \
+  } while(0)
+
 #define ECALL(function) ECALL2(function, true)
+#define ECALL_THROW(function) ECALL_THROW2(function, true)
 
 #endif
 

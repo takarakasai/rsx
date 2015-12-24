@@ -1,6 +1,6 @@
 
-#ifndef RSXPY_H
-#define RSXPY_H
+#ifndef SERVOPY_H
+#define SERVOPY_H
 
 #include "rsxpp/rsxpp.h"
 
@@ -10,7 +10,7 @@
 #define kRSXPY_MAX_PKT_SIZE  1024
 namespace bp = boost::python;
 
-class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
+class servopy : public dp::servo {
 
 #define GET_C_ARRAY(TYPE, size_name, array_name, bpy_list)     \
   const size_t size_name = len(bpy_list);                      \
@@ -32,16 +32,17 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     }                                                                  \
   }
 
- typedef dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE>  base;
+ typedef dp::servo base;
 
  public:
 
-  rsxpy(void) {
+  servopy(void) {
   }
 
-  virtual ~rsxpy(void) {
+  virtual ~servopy(void) {
   }
 
+#if 0
   errno_t spkt_mem_write (uint8_t id, uint8_t start_addr, bp::list &in_data) {
     GET_C_ARRAY(uint8_t, size, data/*[size]*/, in_data);
 
@@ -125,11 +126,12 @@ class rsxpy : public dp::rsxpp<kRSXPY_NUM_OF_JOINTS, kRSXPY_MAX_PKT_SIZE> {
     ECALL(base::lpkt_mem_write_int16_all(id, num, start_addr, size, data));
     return EOK;
   }
+#endif
 
  protected:
 
  private: 
-
+  bp::list rdata;
 };
 
 #endif
