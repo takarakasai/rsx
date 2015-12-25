@@ -27,6 +27,10 @@
   DPSERVO_STRUCT(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) name ## _dps_struct; \
   dpservo_base *name
 
+#define DPSERVO_STATIC_DECL(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO)                  \
+  static DPSERVO_STRUCT(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) name ## _dps_struct; \
+  static dpservo_base *name
+
 #define DPSERVO_INIT(name, PROTOCOL_INIT_MACRO)                               \
   HR_SERIAL_INIT(name ## _dps_struct.hrs);                                     \
   dpservo_init(                                                                \
