@@ -4,6 +4,8 @@
 
 #include "ics/ics_type.h"
 
+#include "dp_err.h"
+
 static const ics_opt_t kICS_VER_MASK = 0x3;
 
 #define ICS_VER_20 0x01 /* not implemented */
