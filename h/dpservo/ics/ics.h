@@ -85,8 +85,8 @@ typedef enum {
  * following sub command id shall be used with ICS_CMD_GP_READ/ICS_CMD_GP_WRITE
  */
 typedef enum {
-  ICS_SCMD_SET_ID = 0x00,
-  ICS_SCMD_GET_ID = 0x01,
+  ICS_SCMD_GET_ID = 0x00,
+  ICS_SCMD_SET_ID = 0x01,
 } ICS_SUB_IDCMD;
 
 //typedef enum {

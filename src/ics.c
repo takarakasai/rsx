@@ -147,15 +147,16 @@ errno_t ics_write_read_pos (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_write_read_pos(ics, id, cmdid, refpos, curpos);
+    eno = _ics_write_read_pos(ics, id, cmdid, refpos, curpos);
     if (eno == EOK) {
       break;
     }
     printf(" pos--- id:%02d pos:%04x fpos:%lf %zd/%zd --failed\n", id, refpos, ICS_HEX2POS(refpos), i, max_count);
   }
 
-  return EOK;
+  return eno;
 }
 
 /*********************************************************************************************************************/
@@ -257,15 +258,16 @@ errno_t ics_mem_read (ics *ics, uint8_t id, uint8_t start_addr, uint8_t rsize, u
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_mem_read(ics, id, start_addr, rsize, data);
+    eno = _ics_mem_read(ics, id, start_addr, rsize, data);
     if (eno == EOK) {
       break;
     }
     printf(" mem_read %zd/%zd --- id:%02d size:%d data[0]:%04x \n", i, max_count, id, rsize, data[0]);
   }
 
-  return EOK;
+  return eno;
 }
 
 /*********************************************************************************************************************/
@@ -366,15 +368,16 @@ errno_t ics_mem_write (ics *ics, uint8_t id, uint8_t start_addr, uint8_t wsize, 
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_mem_write(ics, id, start_addr, wsize, data);
+    eno = _ics_mem_write(ics, id, start_addr, wsize, data);
     if (eno == EOK) {
       break;
     }
     printf(" mem_write --- id:%02d size:%d data[0]:%04x \n", id, wsize, data[0]);
   }
 
-  return EOK;
+  return eno;
 }
 
 /*********************************************************************************************************************/
@@ -503,15 +506,16 @@ errno_t ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*ma
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_get_param(ics, id, max_size, data, option);
+    eno = _ics_get_param(ics, id, max_size, data, option);
     if (eno == EOK) {
       break;
     }
     printf(" get_param --- id:%02d size:%d data[0]:%04x \n", id, max_size, data[0]);
   }
 
-  return EOK;
+  return eno;
 }
 
 static errno_t servo_mem_read (
@@ -699,15 +703,16 @@ errno_t ics_set_param (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsiz
   EVALUE(NULL, ics);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_set_param(ics, id, wsize, wdata, option);
+    eno = _ics_set_param(ics, id, wsize, wdata, option);
     if (eno == EOK) {
       break;
     }
     printf(" set_param --- id:%02d size:%d data[0]:%04x \n", id, wsize, wdata[0]);
   }
 
-  return EOK;
+  return eno;
 }
 
 static errno_t servo_mem_write (
@@ -807,7 +812,7 @@ errno_t ics_deser_set_id_cmd (
   /* | _CMD | */
 
   /* reply data */
-  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(id, ICS_CMD_ID), EILSEQ);
+  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REQ_CMD(id, ICS_CMD_ID), EILSEQ);
 
   //*serialized_size = idx;
 
@@ -846,7 +851,7 @@ errno_t _ics_set_id (ics *ics, uint8_t id) {
   EVALUE(NULL, ics);
 
   ECALL(ics_write_set_id_req(ics, id));
-  usleep(100 * 1000);
+  usleep(200 * 1000);
   ECALL2(ics_read_set_id_rep(ics, id), false);
 
   return EOK;
@@ -857,15 +862,16 @@ errno_t ics_set_id (ics *ics, uint8_t id) {
   ELTGT(0, DPS_SERVO_ID_MAX, id); // TODO: max_id for ics is 31?
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_set_id(ics, id);
+    eno = _ics_set_id(ics, id);
     if (eno == EOK) {
       break;
     }
     printf(" set_id --- id:%02d \n", id);
   }
 
-  return EOK;
+  return eno;
 }
 
 /*********************************************************************************************************************/
@@ -911,8 +917,8 @@ errno_t ics_deser_get_id_cmd (
   /* | _CMD | */
 
   /* reply data */
-  *id = dps->buff[idx++] & ICS_CMDID_MASK;
-  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REP_CMD(*id, ICS_CMD_ID), EILSEQ);
+  *id = dps->buff[idx] & ICS_CMDID_MASK;
+  EXPECT_VALUE_ERRNO(dps->buff[idx++], ICS_SER_REQ_CMD(*id, ICS_CMD_ID), EILSEQ);
 
   //*serialized_size = idx;
 
@@ -952,7 +958,7 @@ errno_t _ics_get_id (ics *ics, uint8_t *id) {
   EVALUE(NULL, ics);
 
   ECALL(ics_write_get_id_req(ics));
-  usleep(100 * 1000);
+  usleep(200 * 1000);
   ECALL2(ics_read_get_id_rep(ics, id), false);
 
   return EOK;
@@ -963,15 +969,16 @@ errno_t ics_get_id (ics *ics, uint8_t *id) {
   EVALUE(NULL, id);
 
   const size_t max_count = ics->retry_count;
+  errno_t eno = -1;
   for (size_t i = 0; i < max_count; i++) {
-    errno_t eno = _ics_get_id(ics, id);
+    eno = _ics_get_id(ics, id);
     if (eno == EOK) {
       break;
     }
     printf(" get_id --- id:%02x \n", *id);
   }
 
-  return EOK;
+  return eno;
 }
 
 /*********************************************************************************************************************/
