@@ -10,9 +10,8 @@
 
 #include "dpservo.h"
 
-static inline errno_t dps_setup (dpservo_base *base, const char *print_str, int argc, char *argv[], int *argc_offset) {
+static inline errno_t dps_setup (dpservo_base *base, int argc, char *argv[], int *argc_offset) {
   EVALUE(NULL, base);
-  EVALUE(NULL, print_str);
   EVALUE(NULL, argc_offset);
 
   bool use_serial = true;
@@ -42,7 +41,6 @@ static inline errno_t dps_setup (dpservo_base *base, const char *print_str, int 
   ECALL(dps_set_serial(base, use_serial));
 
   printf("===: %s/%s with %s(%s)\n", device, port, hr_baudrate2str(baudrate), argv[3]);
-  printf("===: ID: %d\n", id);
   ECALL(dps_open(base, device, port, baudrate, HR_PAR_EVEN));
 
   return EOK;

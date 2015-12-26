@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   float64_t min = -90.0;
 
   int argc_offset;
-  if (eno != dps_setup(servo, argc, argv, &argc_offset)) {
+  if (EOK != dps_setup(servo, argc, argv, &argc_offset)) {
     print_help(argc, argv);
   }
 
@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
     min = (float64_t)strtod(argv[1 + argc_offset], NULL);
     max = (float64_t)strtod(argv[2 + argc_offset], NULL);
   }
+
+  printf("===: ID: %d\n", id);
 
   if (id == 0xFF) {
     ECALL(dps_add_servo(servo,  1));
