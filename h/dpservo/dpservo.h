@@ -2,6 +2,9 @@
 #ifndef DPSERVO_H
 #define DPSERVO_H
 
+/* for strcmp */
+#include <string.h>
+
 #include "dp_type.h"
 #include "dp_err.h"
 
@@ -83,6 +86,22 @@ typedef enum {
   kDpsServoBrk,
   kDpsServoOn
 } dps_servo_state;
+
+static inline errno_t dps_str2servo_state (const char8_t *str, dps_servo_state *state) {
+  EVALUE(NULL, str);
+
+  if (strcmp(str, "off") == 0) {
+    *state = kDpsServoOff;
+  } else if (strcmp(str, "break") == 0) {
+    *state = kDpsServoBrk;
+  } else if (strcmp(str, "on")    == 0) {
+    *state = kDpsServoOn;
+  } else {
+    return EINVAL;
+  }
+
+  return EOK;
+}
 
 typedef struct dpservo_base_struct dpservo_base;
 
