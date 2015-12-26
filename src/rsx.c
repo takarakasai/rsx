@@ -315,7 +315,7 @@ errno_t rsx_init (rsx *rsx, rsx_pkt *lpkt, rsx_pkt *spkt) {
   EVALUE(NULL, spkt);
 
   dpservo_base *dps = get_dpservo_base(rsx);
-  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, write_mem, read_mem));
+  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, write_mem, read_mem, NULL, NULL));
 
   rsx->retry_count = 5;
 

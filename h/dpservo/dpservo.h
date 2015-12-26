@@ -112,6 +112,9 @@ typedef errno_t (*dps_set_goals_op)(dpservo_base *dps, const size_t num, float64
 typedef errno_t (*dps_write_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option);
 typedef errno_t (*dps_read_mem_op)(dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option);
 
+typedef errno_t (*dps_get_id_op)(dpservo_base *dps, uint8_t *id);
+typedef errno_t (*dps_set_id_op)(dpservo_base *dps, const uint8_t id);
+
 typedef struct {
   dps_set_state_op set_state;
   dps_set_states_op set_states;
@@ -119,6 +122,9 @@ typedef struct {
   dps_set_goals_op set_goals;
   dps_write_mem_op write_mem;
   dps_read_mem_op read_mem;
+
+  dps_get_id_op get_id;
+  dps_set_id_op set_id;
 } dpservo_ops;
 
 inline errno_t dpservo_ops_init (
@@ -128,7 +134,9 @@ inline errno_t dpservo_ops_init (
         dps_set_goal_op set_goal,
         dps_set_goals_op set_goals,
         dps_write_mem_op write_mem,
-        dps_read_mem_op read_mem)
+        dps_read_mem_op read_mem,
+        dps_get_id_op get_id,
+        dps_set_id_op set_id)
 {
     EVALUE(NULL, ops);
 
@@ -145,6 +153,9 @@ inline errno_t dpservo_ops_init (
     ops->set_goals  = set_goals;
     ops->write_mem  = write_mem;
     ops->read_mem   = read_mem;
+
+    ops->get_id     = get_id;
+    ops->set_id     = set_id;
 
     return EOK;
 }
@@ -357,6 +368,24 @@ static inline errno_t dps_mem_write (dpservo_base *dps, const uint8_t id, uint8_
 static inline errno_t dps_mem_read (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size, uint8_t data[/*size*/], int32_t option) {
   EVALUE(NULL, dps);
   ECALL(dps->ops.read_mem(dps, id, start_addr, size, data, option));
+  return EOK;
+}
+
+static inline errno_t dps_get_id (dpservo_base *dps, uint8_t *id) {
+  EVALUE(NULL, dps);
+  if (dps->ops.get_id == NULL) {
+    fprintf(stderr, " %s not implemented\n", __FUNCTION__);
+  }
+  ECALL(dps->ops.get_id(dps, id));
+  return EOK;
+}
+
+static inline errno_t dps_set_id (dpservo_base *dps, const uint8_t id) {
+  EVALUE(NULL, dps);
+  if (dps->ops.get_id == NULL) {
+    fprintf(stderr, " %s not implemented\n", __FUNCTION__);
+  }
+  ECALL(dps->ops.set_id(dps, id));
   return EOK;
 }
 

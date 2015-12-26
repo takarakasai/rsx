@@ -1066,7 +1066,7 @@ errno_t ics_init (ics *ics) {
   EVALUE(NULL, ics);
 
   dpservo_base *dps = get_dpservo_base(ics);
-  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, servo_mem_write, servo_mem_read));
+  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, servo_mem_write, servo_mem_read, NULL, NULL));
 
   ics->retry_count = 3;
 
