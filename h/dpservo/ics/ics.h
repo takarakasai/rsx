@@ -40,8 +40,13 @@
 #define ICS_SER_REQ_SUBCMD(scmdid) (scmdid)
 
 /* for specific command like pos command */
+#if 0 //TODO:
 #define ICS_REP_POS_CMD_MSB(servoid, baudrate, data)  \
   ((((servoid) == 0) && ((baudrate) == ICS_UART_RATE_115200)) ? (0x80 | (data)) : (0x7F & (data)))
+#else
+#define ICS_REP_POS_CMD_MSB(servoid, baudrate, data)  \
+  ((((servoid) == 0) && ((baudrate) == HR_B115200)) ? (0x80 | (data)) : (0x7F & (data)))
+#endif
 #define ICS_SER_REQ_POS_CMD(servoid, cmdid)           \
   ICS_SER_REQ_CMD(servoid, cmdid)
 #define ICS_SER_REP_POS_CMD(servoid, cmdid, baudrate) \
@@ -84,11 +89,11 @@ typedef enum {
   ICS_SCMD_GET_ID = 0x01,
 } ICS_SUB_IDCMD;
 
-typedef enum {
-  ICS_UART_RATE_115200,
-  ICS_UART_RATE_625000,
-  ICS_UART_RATE_1250000,
-} ICS_UART_RATE;
+//typedef enum {
+//  ICS_UART_RATE_115200,
+//  ICS_UART_RATE_625000,
+//  ICS_UART_RATE_1250000,
+//} ICS_UART_RATE;
 
 typedef struct {
   dpservo_base base; /* inherit dpservo */
