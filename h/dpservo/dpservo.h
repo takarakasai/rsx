@@ -123,8 +123,8 @@ typedef struct {
   dps_write_mem_op write_mem;
   dps_read_mem_op read_mem;
 
-  dps_get_id_op get_id;
   dps_set_id_op set_id;
+  dps_get_id_op get_id;
 } dpservo_ops;
 
 inline errno_t dpservo_ops_init (
@@ -135,8 +135,8 @@ inline errno_t dpservo_ops_init (
         dps_set_goals_op set_goals,
         dps_write_mem_op write_mem,
         dps_read_mem_op read_mem,
-        dps_get_id_op get_id,
-        dps_set_id_op set_id)
+        dps_set_id_op set_id,
+        dps_get_id_op get_id)
 {
     EVALUE(NULL, ops);
 
@@ -154,8 +154,8 @@ inline errno_t dpservo_ops_init (
     ops->write_mem  = write_mem;
     ops->read_mem   = read_mem;
 
-    ops->get_id     = get_id;
     ops->set_id     = set_id;
+    ops->get_id     = get_id;
 
     return EOK;
 }
