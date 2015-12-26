@@ -854,6 +854,7 @@ errno_t _ics_set_id (ics *ics, uint8_t id) {
 
 errno_t ics_set_id (ics *ics, uint8_t id) {
   EVALUE(NULL, ics);
+  ELTGT(0, DPS_SERVO_ID_MAX, id); // TODO: max_id for ics is 31?
 
   const size_t max_count = ics->retry_count;
   for (size_t i = 0; i < max_count; i++) {
@@ -1049,7 +1050,6 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
   return EOK;
 }
 
-
 static errno_t NOT_USED_FUNC mem_write (dpservo_base *dps, const uint8_t id, uint8_t start_addr, size_t size/*[byte]*/, uint8_t data[/*size*/], dps_opt_t option) {
   EVALUE(NULL, dps);
   ECALL(ics_mem_write((ics*)dps, id, start_addr, size, data));
@@ -1062,11 +1062,27 @@ static errno_t NOT_USED_FUNC mem_read (dpservo_base *dps, const uint8_t id, uint
   return EOK;
 }
 
+static errno_t set_id (dpservo_base *dps, const uint8_t id) {
+  EVALUE(NULL, dps);
+
+  ECALL(ics_set_id((ics*)dps, id));
+
+  return EOK;
+}
+
+static errno_t get_id (dpservo_base *dps, uint8_t *id) {
+  EVALUE(NULL, dps);
+
+  ECALL(ics_get_id((ics*)dps, id));
+
+  return EOK;
+}
+
 errno_t ics_init (ics *ics) {
   EVALUE(NULL, ics);
 
   dpservo_base *dps = get_dpservo_base(ics);
-  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, servo_mem_write, servo_mem_read, NULL, NULL));
+  ECALL(dpservo_ops_init(&(dps->ops), set_state, set_states, set_goal, set_goals, servo_mem_write, servo_mem_read, set_id, get_id));
 
   ics->retry_count = 3;
 
