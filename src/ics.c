@@ -79,7 +79,7 @@ errno_t ics_ser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t pos, 
 #define ICS_POS_CMD_REQ_PKT_SIZE 3 /* [byte] */
 #define ICS_POS_CMD_REP_PKT_SIZE 3 /* [byte] */
 
-errno_t ics_deser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, ICS_UART_RATE baudrate) {
+errno_t ics_deser_set_pos_cmd (ics *ics, uint8_t id, uint8_t cmdid, uint16_t refpos, uint16_t *curpos, hr_baudrate baudrate){ //ICS_UART_RATE baudrate) {
   EVALUE(NULL, ics);
   EVALUE(NULL, curpos);
 
