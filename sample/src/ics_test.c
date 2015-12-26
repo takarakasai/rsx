@@ -1,4 +1,6 @@
 
+#include "helper.h"
+
 /* for printf */
 #include <stdio.h>
 
@@ -10,6 +12,11 @@
 
 #include "ics/ics.h"
 
+errno_t print_help (int argc, char *argv[]) {
+  printf(" %s device port high|mid|low id|255 min max\n", argv[0]);
+  return EOK;
+}
+
 /*
  * ./build/sample/ics_test ttyUSB 0 low 255 -30 30 
  */
@@ -18,39 +25,20 @@ int main(int argc, char *argv[]) {
   DPSERVO_DECL(servo, 20, 1024, ICS_DECL);
   DPSERVO_INIT(servo, ICS_INIT);
   
-  bool use_serial = true;
   uint8_t id = 1;
-
-  hr_baudrate baudrate = HR_B115200;
-
-  char *device = "ttyUSB";
-  char *port   = "0";
   float64_t max = +90.0;
   float64_t min = -90.0;
 
-  if (argc >= 7) {
-    device = argv[1];
-    port   = argv[2];
-
-    if (strcmp(argv[3], "high") == 0) {
-      baudrate = HR_B1250000;
-    } else if(strcmp(argv[3], "mid") == 0) {
-      baudrate =  HR_B625000;
-    } else {
-      baudrate =  HR_B115200;
-    }
-
-    id = (uint8_t)strtoul(argv[4], NULL, 10);
-
-    min = (float64_t)strtod(argv[5], NULL);
-    max = (float64_t)strtod(argv[6], NULL);
+  int argc_offset;
+  if (eno != dps_setup(servo, argc, argv, &argc_offset)) {
+    print_help(argc, argv);
   }
 
-  printf("===: %s/%s with %s(%s)\n", device, port, hr_baudrate2str(baudrate), argv[3]);
-  printf("===: ID: %d\n", id);
-  ECALL(dps_open(servo, device, port, baudrate, HR_PAR_EVEN));
-
-  ECALL(dps_set_serial(servo, use_serial));
+  if (argc >= 3 + argc_offset) {
+    id = (uint8_t)strtoul(argv[argc_offset], NULL, 10);
+    min = (float64_t)strtod(argv[1 + argc_offset], NULL);
+    max = (float64_t)strtod(argv[2 + argc_offset], NULL);
+  }
 
   if (id == 0xFF) {
     ECALL(dps_add_servo(servo,  1));
@@ -77,23 +65,23 @@ int main(int argc, char *argv[]) {
   
     usleep(1000 * 1000);
     printf("--> 0.0\n");
-    (dps_set_goals(servo, 2, zero_vec));
+    (dps_set_goals(servo, id, zero_vec));
   
     usleep(1000 * 1000);
     printf("--> max\n");
-    (dps_set_goals(servo, 2, max_vec));
+    (dps_set_goals(servo, id, max_vec));
   
     usleep(1000 * 1000);
     printf("--> 0.0\n");
-    (dps_set_goals(servo, 2, zero_vec));
+    (dps_set_goals(servo, id, zero_vec));
   
     usleep(1000 * 1000);
     printf("--> min\n");
-    (dps_set_goals(servo, 2, min_vec));
+    (dps_set_goals(servo, id, min_vec));
   
     usleep(1000 * 1000);
     printf("--> 0.0\n");
-    (dps_set_goals(servo, 2, zero_vec));
+    (dps_set_goals(servo, id, zero_vec));
   
     usleep(1000 * 1000);
     printf("--> SERVO OFF\n");
@@ -126,7 +114,7 @@ int main(int argc, char *argv[]) {
     dps_set_state(servo, id, kDpsServoOff);
   }
 
-  ECALL(dps_close(servo));
+  ECALL(dps_teardown(servo, argc, argv));
 
   return 0;
 }
