@@ -4,6 +4,7 @@ project(dpservo)
 
 option(ENABLE_SAMPLE "enable to build sample app" ON)
 option(ENABLE_PYTHON_API "enable to build python api" OFF)
+option(ENABLE_MATLAB_API "enable to build matlab api" OFF)
 
 option(HR_SERIAL_AUTO_READ_ECHO_DATA "" ON)
 if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
@@ -45,6 +46,10 @@ endif()
 
 if(${ENABLE_PYTHON_API})
     add_subdirectory(python)
+endif()
+
+if(${ENABLE_MATLAB_API})
+    add_subdirectory(matlab)
 endif()
 
 if(${UNIX})
