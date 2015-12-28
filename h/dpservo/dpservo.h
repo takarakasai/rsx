@@ -15,6 +15,9 @@
 #define DPS_SERVO_ID_INVALID 0xFF
 #define DPS_SERVO_ID_MAX     0xFE /* 254 */
 
+#define DPS_SERVO_DIR_POSITIVE  1
+#define DPS_SERVO_DIR_NEGATIVE -1
+
 #define DPSERVO_STRUCT_TYPE(name) struct name ## _dps_struct
 
 #define DPSERVO_STRUCT(name, max_num_of_servo, max_data_size, PROTOCOL_DECL_MACRO) \
@@ -23,6 +26,7 @@
     HR_SERIAL_DECL(hrs);                                                           \
     uint8_t   ids  [max_num_of_servo];                                             \
     float64_t oang [max_num_of_servo];                                             \
+    int8_t    dir  [max_num_of_servo];                                             \
     uint8_t   buff [max_data_size];                                                \
   }
 
@@ -41,6 +45,7 @@
    sizeof(name ## _dps_struct.ids) / sizeof(name ## _dps_struct.ids[0]),       \
    (name ## _dps_struct.ids),                                                  \
    (name ## _dps_struct.oang),                                                 \
+   (name ## _dps_struct.dir),                                                  \
    sizeof(name ## _dps_struct.buff) / sizeof(name ## _dps_struct.buff[0]),     \
    (name ## _dps_struct.buff),                                                 \
    &(name));                                                                   \
@@ -171,7 +176,8 @@ typedef struct dpservo_base_struct {
   size_t max_num_of_servo;     /* max number of servo */
   size_t num_of_servo;         /* number of servo to be used. */
   uint8_t *servo_ids/*[num_of_servo]*/;
-  float64_t *oang/*[num_of_servo]*/;
+  float64_t    *oang/*[num_of_servo]*/;
+  int8_t        *dir/*[num_of_servo]*/;
 
   /* debug */
   bool io_enabled;
@@ -186,7 +192,8 @@ static inline dpservo_base* get_dpservo_base(void* child) {
 
 static inline errno_t dpservo_init (
         dpservo_base *dps, hr_serial *hrs,
-        size_t num_of_servo, uint8_t ids[/*num_of_servo*/], float64_t oang[/*num_of_servo*/],
+        size_t num_of_servo, uint8_t ids[/*num_of_servo*/],
+        float64_t oang[/*num_of_servo*/], int8_t direction[/*num_of_servo*/],
         //size_t max_size, uint8_t buff[/*max_size*/])
         size_t max_size, uint8_t buff[/*max_size*/], dpservo_base **p_dps)
 {
@@ -203,12 +210,14 @@ static inline errno_t dpservo_init (
 
   dps->servo_ids = ids;
   dps->oang      = oang;
+  dps->dir       = direction;
   dps->max_num_of_servo = num_of_servo;
   dps->num_of_servo     = 0;
   for (uint8_t i = 0; i < dps->max_num_of_servo; i++) {
     /* [1, 2, 3, ..., num_of_servo] */
     dps->servo_ids[i] = DPS_SERVO_ID_INVALID; /* 0xFF */
     dps->oang[i]      = 0.0;
+    dps->dir[i]       = DPS_SERVO_DIR_POSITIVE;
   }
 
   for (uint8_t i = 0; i < DPS_SERVO_ID_MAX; i++) {
@@ -285,6 +294,20 @@ static inline errno_t dps_set_servo (dpservo_base *dps, uint8_t num, uint8_t id[
   return EOK;
 }
 
+static inline errno_t dps_set_direction (dpservo_base *dps, uint8_t id, int8_t direction) {
+  EVALUE(NULL, dps);
+  ELTGT(0, DPS_SERVO_ID_MAX, id); /* 0 <= id <= 0xFE is OK */
+
+  if (direction != DPS_SERVO_DIR_POSITIVE && direction != DPS_SERVO_DIR_NEGATIVE) {
+    return EINVAL;
+  }
+
+  uint8_t idx = dps->id2idx[id];
+  dps->dir[idx] = direction;
+
+  return EOK;
+}
+
 static inline errno_t dps_set_offset_angle (dpservo_base *dps, uint8_t id, float64_t oangle) {
   EVALUE(NULL, dps);
   ELTGT(0, DPS_SERVO_ID_MAX, id); /* 0 <= id <= 0xFE is OK */
@@ -344,7 +367,7 @@ static inline errno_t dps_set_states (dpservo_base *dps, dps_servo_state state) 
 static inline errno_t dps_set_goal (dpservo_base *dps, const uint8_t id, float64_t goal) {
   EVALUE(NULL, dps);
   uint8_t idx = dps->id2idx[id];
-  const float64_t act_goal = goal + dps->oang[idx];
+  const float64_t act_goal = dps->dir[idx] * (goal + dps->oang[idx]);
   ECALL(dps->ops.set_goal(dps, id, act_goal));
   return EOK;
 }
@@ -353,7 +376,7 @@ static inline errno_t dps_set_goals (dpservo_base *dps, const size_t num, float6
   EVALUE(NULL, dps);
   float64_t act_goal[num];
   for (size_t i = 0; i < num; i++) {
-    act_goal[i] = goal[i] + dps->oang[i];
+    act_goal[i] = dps->dir[i] * (goal[i] + dps->oang[i]);
   }
   ECALL(dps->ops.set_goals(dps, num, act_goal));
   return EOK;
