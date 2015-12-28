@@ -46,25 +46,25 @@ int main(int argc, char *argv[]) {
 
   if (id == 0xFF) {
     /* left  arm */
-    ECALL(dps_add_servo(servo,  1)); ECALL(dps_set_offset_angle(servo,  1, 0.0));
-    ECALL(dps_add_servo(servo,  2)); ECALL(dps_set_offset_angle(servo,  2, 0.0));
-    ECALL(dps_add_servo(servo,  3)); ECALL(dps_set_offset_angle(servo,  3, 0.0));
+    ECALL(dps_add_servo(servo,  1)); ECALL(dps_set_offset_angle(servo,  1,   0.0)); ECALL(dps_set_direction(servo,  1, DPS_SERVO_DIR_POSITIVE)); 
+    ECALL(dps_add_servo(servo,  2)); ECALL(dps_set_offset_angle(servo,  2,   0.0)); ECALL(dps_set_direction(servo,  2, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo,  3)); ECALL(dps_set_offset_angle(servo,  3,   0.0)); ECALL(dps_set_direction(servo,  3, DPS_SERVO_DIR_POSITIVE));
     /* left legs */
-    ECALL(dps_add_servo(servo,  6)); ECALL(dps_set_offset_angle(servo,  6, 0.0));
-    ECALL(dps_add_servo(servo,  7)); ECALL(dps_set_offset_angle(servo,  7, 0.0));
-    ECALL(dps_add_servo(servo,  8)); ECALL(dps_set_offset_angle(servo,  8, -80.0));
-    ECALL(dps_add_servo(servo,  9)); ECALL(dps_set_offset_angle(servo,  9, 0.0));
-    ECALL(dps_add_servo(servo, 10)); ECALL(dps_set_offset_angle(servo, 10, 0.0));
+    ECALL(dps_add_servo(servo,  6)); ECALL(dps_set_offset_angle(servo,  6,   0.0)); ECALL(dps_set_direction(servo,  6, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo,  7)); ECALL(dps_set_offset_angle(servo,  7,   0.0)); ECALL(dps_set_direction(servo,  7, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo,  8)); ECALL(dps_set_offset_angle(servo,  8,  80.0)); ECALL(dps_set_direction(servo,  8, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo,  9)); ECALL(dps_set_offset_angle(servo,  9,   0.0)); ECALL(dps_set_direction(servo,  9, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 10)); ECALL(dps_set_offset_angle(servo, 10,   0.0)); ECALL(dps_set_direction(servo, 10, DPS_SERVO_DIR_POSITIVE));
     /* right  arm */
-    ECALL(dps_add_servo(servo, 11)); ECALL(dps_set_offset_angle(servo, 11, 0.0));
-    ECALL(dps_add_servo(servo, 12)); ECALL(dps_set_offset_angle(servo, 12, 0.0));
-    ECALL(dps_add_servo(servo, 13)); ECALL(dps_set_offset_angle(servo, 13, 0.0));
+    ECALL(dps_add_servo(servo, 11)); ECALL(dps_set_offset_angle(servo, 11,   0.0)); ECALL(dps_set_direction(servo, 11, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 12)); ECALL(dps_set_offset_angle(servo, 12,   0.0)); ECALL(dps_set_direction(servo, 12, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 13)); ECALL(dps_set_offset_angle(servo, 13,   0.0)); ECALL(dps_set_direction(servo, 13, DPS_SERVO_DIR_POSITIVE));
     /* right legs */
-    ECALL(dps_add_servo(servo, 16)); ECALL(dps_set_offset_angle(servo, 16, 0.0));
-    ECALL(dps_add_servo(servo, 17)); ECALL(dps_set_offset_angle(servo, 17, 0.0));
-    ECALL(dps_add_servo(servo, 18)); ECALL(dps_set_offset_angle(servo, 18, 80.0));
-    ECALL(dps_add_servo(servo, 19)); ECALL(dps_set_offset_angle(servo, 19, 0.0));
-    ECALL(dps_add_servo(servo, 20)); ECALL(dps_set_offset_angle(servo, 20, 0.0));
+    ECALL(dps_add_servo(servo, 16)); ECALL(dps_set_offset_angle(servo, 16,   0.0)); ECALL(dps_set_direction(servo, 16, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 17)); ECALL(dps_set_offset_angle(servo, 17,   0.0)); ECALL(dps_set_direction(servo, 17, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 18)); ECALL(dps_set_offset_angle(servo, 18,  80.0)); ECALL(dps_set_direction(servo, 18, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 19)); ECALL(dps_set_offset_angle(servo, 19,   0.0)); ECALL(dps_set_direction(servo, 19, DPS_SERVO_DIR_POSITIVE));
+    ECALL(dps_add_servo(servo, 20)); ECALL(dps_set_offset_angle(servo, 20,   0.0)); ECALL(dps_set_direction(servo, 20, DPS_SERVO_DIR_POSITIVE));
     printf("===: num of servo: %d\n", dps_get_num_of_servo(servo));
     //ECALL(dps_set_goas
  
