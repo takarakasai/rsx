@@ -41,18 +41,28 @@ llink(6) = struct('name', 'lankle_roll',  'offset', [0 +37.1 -27.5]', 'child', 0
    
 while 1 
     %
-    for idx = 1:1:size(hlink,2)
-        hlink(idx).angle = rand * 180 - 90;        
-    end
-    for idx = 1:1:size(lalink,2)
-        lalink(idx).angle = rand * 40 - 20;
-        ralink(idx).angle = rand * 40 - 20;       
-    end
-    for idx = 1:1:size(llink,2)
+    hlink(2).angle = rand * 180 - 90;        
 
-        llink(idx).angle = rand * 40 - 20;
-        rlink(idx).angle = rand * 40 - 20;
-    end
+    lalink(2).angle = rand *180 - 90;
+    lalink(3).angle = rand *180 - 90;
+    lalink(4).angle = rand * 40 - 20;
+    lalink(5).angle = rand *-90;
+
+    ralink(2).angle = rand *180 - 90;
+    ralink(3).angle = rand *180 - 90;
+    ralink(4).angle = rand * 40 - 20;
+    ralink(5).angle = rand *-90;
+
+    llink(2).angle = rand *  30;
+    rlink(2).angle = rand * -30;
+    llink(3).angle = rand *  90 - 70;
+    rlink(3).angle = rand *  90 - 70;
+    llink(4).angle = -2 * llink(3).angle;
+    rlink(4).angle = -2 * rlink(3).angle;
+    llink(5).angle =      llink(3).angle;
+    rlink(5).angle =      rlink(3).angle;
+    llink(6).angle =     -llink(2).angle;
+    rlink(6).angle =     -rlink(2).angle;
     %
 
     clf;
