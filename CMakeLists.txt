@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8.4)
 
 project(dpservo)
 
+if(${MINGW})
+  set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/out") 
+endif()
+
 option(ENABLE_SAMPLE "enable to build sample app" ON)
 option(ENABLE_PYTHON_API "enable to build python api" OFF)
 option(ENABLE_MATLAB_API "enable to build matlab api" OFF)

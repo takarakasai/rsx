@@ -11,6 +11,7 @@ endif()
 set(APP_NAME rsx_app)
 
 set(DEPENDENCIES "dpservo")
+list(APPEND DEPENDENCIES pthread rt)
 
 foreach(SRC ${SRCS})
   message(STATUS ${SRC})
@@ -18,8 +19,6 @@ foreach(SRC ${SRCS})
   message(STATUS ": " ${STR})
 
   add_executable(${STR} ${SRC})
-
-  list(APPEND DEPENDENCIES pthread rt)
 
   message(STATUS ": " ${STR} " with " ${DEPENDENCIES})
 
