@@ -2,21 +2,18 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 /* for strto* */
 #include <stdlib.h>
 
 /* for datadump */
 #include "dpservo.h"
 
+//#if defined(HR_SERIAL_LATENCY_CHECK)
+#include "time/hr_unixtime.h"
+//endif
+
 #include "rsx/rsx_pkt.h"
 #include "rsx/rsx_io.h"
-
-#if defined(HR_SERIAL_LATENCY_CHECK)
-#include "time/hr_unixtime.h"
-#endif
 
 #include <stdbool.h>
 
@@ -118,7 +115,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs,
   ECALL(data_dump(buff, size));
   if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-  sleep(1);
+  hr_usleep(1000 * 1000);
 
   ///////////// read rom ////////////////////////////////
 

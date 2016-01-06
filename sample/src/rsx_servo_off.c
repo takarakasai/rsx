@@ -2,12 +2,12 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
 #include <string.h>
 
 /* for datadump */
 #include "dpservo.h"
+
+#include "time/hr_unixtime.h"
 
 #include "rsx/rsx.h"
 #include "rsx/mmap/rs30x.h"
@@ -27,7 +27,7 @@ static int run_test(int argc, char *argv[], rsx *servo, uint8_t servo_state) {
 
   uint8_t data[num_of_joints][1];
   for (size_t i = 0; i < num_of_joints; i++) {
-    usleep(20 * 1000);
+    hr_usleep(20 * 1000);
     ECALL(rsx_spkt_mem_read(servo, id[i], RSX_RAM_TRQ_ENABLE, 1, data[i]));
   }
  

@@ -4,13 +4,13 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
 #include <string.h>
 /* for strtoul */
 #include <stdlib.h>
 
 #include "ics/ics.h"
+
+#include "time/hr_unixtime.h"
 
 errno_t print_help (int argc, char *argv[]) {
   printf(" %s device port high|mid|low id|255 min max\n", argv[0]);
@@ -79,53 +79,53 @@ int main(int argc, char *argv[]) {
       max_vec[i] = max;
     }
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     (dps_set_goals(servo, id, mid_vec));
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> max\n");
     (dps_set_goals(servo, id, max_vec));
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     (dps_set_goals(servo, id, mid_vec));
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> min\n");
     (dps_set_goals(servo, id, min_vec));
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     (dps_set_goals(servo, id, mid_vec));
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> SERVO OFF\n");
     (dps_set_states(servo, kDpsServoOff));
 
   } else {
   
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     dps_set_goal(servo, id, mid);
 
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> max\n");
     dps_set_goal(servo, id, max);
 
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     dps_set_goal(servo, id, mid);
 
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> min\n");
     dps_set_goal(servo, id, min);
 
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> 0.0\n");
     dps_set_goal(servo, id, mid);
 
-    usleep(1000 * 1000);
+    hr_usleep(1000 * 1000);
     printf("--> SERVO OFF\n");
     dps_set_state(servo, id, kDpsServoOff);
   }

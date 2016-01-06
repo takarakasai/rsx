@@ -4,8 +4,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
 #include <string.h>
 /* for strtoul */
 #include <stdlib.h>

@@ -12,3 +12,5 @@ errno_t hr_diff_time (const hr_time *tm_bef, const hr_time *tm_aft, hr_time *tm_
  
 errno_t hr_dump_time (const hr_time *tm);
 
+errno_t hr_usleep (const uint32_t usec);
+

@@ -2,18 +2,15 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 /* for datadump */
 #include "dpservo.h"
 
 #include "rsx/rsx_pkt.h"
 #include "rsx/rsx_io.h"
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
+//#if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"
-#endif
+//#endif
 
 #include <stdbool.h>
 
@@ -65,7 +62,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   }
 
   printf("----- end ----- \n");
-  usleep(10 * 1000);
+  hr_usleep(10 * 1000);
 
   return 0;
 }

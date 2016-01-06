@@ -10,9 +10,6 @@
 /* for memset */
 #include <string.h>
 
-/* for usleep */
-#include <unistd.h>
-
 static const size_t timeout_usec = 200; // TODO: ICS --> 100 | RSX --> 200
 static const size_t wait_usec    = 10;
 
@@ -82,7 +79,7 @@ static errno_t serial_read (hr_serial *ser, void* data, size_t size) {
   size_t rcv_cnt = 0;
   size_t cnt;
   for (cnt = 0; cnt < max_count; cnt++) {
-    usleep(wait_usec);
+    hr_usleep(wait_usec);
 
     size_t read_size;
     uint8_t rdata[size];
@@ -156,7 +153,7 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
   const size_t max_count = (timeout_usec + wait_usec - 1) / wait_usec;
   size_t cnt;
   for (cnt = 0; cnt < max_count; cnt++) {
-    usleep(wait_usec);
+    hr_usleep(wait_usec);
     size_t recv_size;
     uint8_t rdata[send_size];
     ECALL(hr_read(&(ser->io), rdata, send_size, &recv_size));

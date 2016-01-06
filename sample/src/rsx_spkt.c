@@ -2,18 +2,15 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 /* for datadump */
 #include "dpservo.h"
 
 #include "rsx/rsx_pkt.h"
 #include "rsx/rsx_io.h"
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
+//#if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"
-#endif
+//#endif
 
 #include <stdbool.h>
 
@@ -99,11 +96,11 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   ECALL(data_dump(buff, size));
   //if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-  usleep(5 * 1000);
+  hr_usleep(5 * 1000);
 
   do {
     ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
-    //usleep(5 * 1000);
+    //hr_usleep(5 * 1000);
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
   hr_time tm_bef, tm_aft, tm_diff;
@@ -121,7 +118,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(data_dump(buff, size));
     if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-    //usleep(50 * 1000);
+    //hr_usleep(50 * 1000);
     ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
 
 #if defined(HR_SERIAL_LATENCY_CHECK)
@@ -136,7 +133,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   ECALL(hr_get_time(&tm_bef));
 #endif
 
-    //usleep(5 * 1000);
+    //hr_usleep(5 * 1000);
 
     // 0xFC7C --> -90[deg]
     RSX_SPKT_SET_INT16(spkt, 0, -900);
@@ -155,10 +152,10 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
   ECALL(hr_dump_time(&tm_diff));
 #endif
 
-    //usleep(50 * 1000);
+    //hr_usleep(50 * 1000);
   } while(count++ < 5);
 
-  usleep(10 * 1000);
+  hr_usleep(10 * 1000);
 
 #if 0 // TODO:
   /* servo off */
@@ -176,7 +173,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 #endif
 
   printf("----- end ----- \n");
-  usleep(10 * 1000);
+  hr_usleep(10 * 1000);
 
   return 0;
 }

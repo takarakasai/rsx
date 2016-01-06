@@ -2,18 +2,15 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 /* for datadump */
 #include "dpservo.h"
 
 #include "rsx/rsx_pkt.h"
 #include "rsx/rsx_io.h"
 
-#if defined(HR_SERIAL_LATENCY_CHECK)
+//#if defined(HR_SERIAL_LATENCY_CHECK)
 #include "time/hr_unixtime.h"
-#endif
+//#endif
 
 #include <stdbool.h>
 
@@ -96,7 +93,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
 
     printf("Model Number L:%02x H:%02x FW-ver:%02x\n", RSX_SPKT_GET_U8(rpkt, 0), RSX_SPKT_GET_U8(rpkt, 1), RSX_SPKT_GET_U8(rpkt, 2));
-    usleep(100 * 1000);
+    hr_usleep(100 * 1000);
   }
 
   //ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
@@ -133,14 +130,14 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
     ECALL(data_dump(buff, size));
     if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
-    usleep(10 * 1000);
+    hr_usleep(10 * 1000);
     if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 1)); // TODO: size + 2
     ECALL(data_dump(buff, size + 1));                           // TODO: size + 2
     ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
 
     printf(" |%02x", RSX_SPKT_GET_U8(rpkt, 0));
 
-    usleep(20 * 1000);
+    hr_usleep(20 * 1000);
   }
   printf("\n");
 
@@ -192,12 +189,12 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
 
     //ECALL(get_current(hrs, &rpkt, buff, sizeof(buff), use_serial));
  
-    usleep(15 * 1000);
+    hr_usleep(15 * 1000);
   }
 
   printf("\033[20B");
 
-  usleep(100 * 1000);
+  hr_usleep(100 * 1000);
 
   for (size_t i=0;i<10;i++) {
     /* servo off */
@@ -215,12 +212,12 @@ int run_test(int argc, char *argv[], hr_serial *hrs, bool use_serial) {
     ECALL(data_dump(buff, size));
     if(use_serial) ECALL(hr_serial_write(hrs, buff, size));
 
-    usleep(100 * 1000);
+    hr_usleep(100 * 1000);
   }
 
   printf("----- end ----- \n");
 
-  usleep(500 * 1000);
+  hr_usleep(500 * 1000);
 
   return 0;
 }

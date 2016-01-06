@@ -5,6 +5,8 @@
 
 #include "ics/mmap/ics3x.h"
 
+#include "time/hr_unixtime.h"
+
 #include <unistd.h>
 #include <string.h>
 
@@ -496,7 +498,7 @@ errno_t _ics_get_param (ics *ics, uint8_t id, uint8_t max_size, uint8_t data[/*m
   EVALUE(NULL, ics);
 
   ECALL(ics_write_get_param_req(ics, id));
-  usleep(30 * 1000); /* at least 8[msec] */
+  hr_usleep(30 * 1000); /* at least 8[msec] */
   ECALL2(ics_read_get_param_rep(ics, id, max_size, data, option), false);
 
   return EOK;
@@ -693,7 +695,7 @@ errno_t _ics_set_param (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsi
   EVALUE(NULL, ics);
 
   ECALL(ics_write_set_param_req(ics, id, wsize, wdata, option));
-  usleep(1000 * 1000);
+  hr_usleep(1000 * 1000);
   ECALL2(ics_read_set_param_rep(ics, id, wsize, wdata, option), false);
 
   return EOK;
@@ -851,7 +853,7 @@ errno_t _ics_set_id (ics *ics, uint8_t id) {
   EVALUE(NULL, ics);
 
   ECALL(ics_write_set_id_req(ics, id));
-  usleep(200 * 1000);
+  hr_usleep(200 * 1000);
   ECALL2(ics_read_set_id_rep(ics, id), false);
 
   return EOK;
@@ -958,7 +960,7 @@ errno_t _ics_get_id (ics *ics, uint8_t *id) {
   EVALUE(NULL, ics);
 
   ECALL(ics_write_get_id_req(ics));
-  usleep(200 * 1000);
+  hr_usleep(200 * 1000);
   ECALL2(ics_read_get_id_rep(ics, id), false);
 
   return EOK;
@@ -1025,7 +1027,7 @@ static errno_t set_goal (dpservo_base *dps, uint8_t id, float64_t goal) {
   //for (size_t i = 0; i < 100; i++) {
   //  ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, 0x0000, &curpos));
   //  printf("===>>> %d %04x %lf\n", ogoal, curpos, ICS_HEX2POS(curpos));
-  //  usleep(100 * 1000);
+  //  hr_usleep(100 * 1000);
   //}
 
   return EOK;
@@ -1043,7 +1045,7 @@ static errno_t set_goals (dpservo_base *dps, size_t num, float64_t goal[/*num*/]
     uint16_t iogoal = ICS_POS2HEX(goal[i]);
     //ECALL(ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
     (ics_write_read_pos((ics*)dps, dps->servo_ids[i], ICS_CMD_REQ_POS, iogoal, &iogoal));
-    //usleep(1000 * 1000);
+    //hr_usleep(1000 * 1000);
     //goal[i] = ICS_HEX2POS(iogoal);
   }
 

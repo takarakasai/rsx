@@ -2,6 +2,9 @@
 
 #include "dp_err.h"
 
+// for usleep
+#include <unistd.h>
+
 typedef struct timespec hr_time;
 
 errno_t hr_get_time (hr_time *tm) {
@@ -39,6 +42,22 @@ errno_t hr_dump_time (const hr_time *tm) {
 #if defined(__unix)
   printf("%09zd%06zd.%03zd[usec]\n", tm->tv_sec, tm->tv_nsec / 1000, tm->tv_nsec % 1000);
 #endif
+
+  return EOK;
+}
+
+errno_t hr_usleep (const uint32_t usec) {
+
+  struct timespec ts;
+  if (usec >= 1000 * 1000) {
+    ts.tv_sec =   usec / (1000 * 1000);
+    ts.tv_nsec = (usec % (1000 * 1000)) * 1000;
+  } else {
+    ts.tv_sec  = 0;
+    ts.tv_nsec = usec * 1000;
+  }
+
+  nanosleep( &ts, NULL);
 
   return EOK;
 }
