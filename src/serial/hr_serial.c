@@ -38,7 +38,7 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_ba
 #if defined(__unix)
   const char *header = "/dev/";
 #elif  defined(__MINGW32__)
-  const char *header = "\\\\.\\COM";
+  const char *header = "\\\\.\\";
 #endif
   size_t len_header = strlen(header);
   size_t len_dev  = strlen(dev);

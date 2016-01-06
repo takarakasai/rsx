@@ -1018,7 +1018,8 @@ static errno_t set_goal (dpservo_base *dps, uint8_t id, float64_t goal) {
   ELTGT(ICS_POS_MIN, ICS_POS_MAX, goal);
 
   uint16_t ogoal = ICS_POS2HEX(goal);
-  ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, ogoal, NULL));
+  uint16_t cgoal;
+  ECALL(ics_write_read_pos((ics*)dps, id, ICS_CMD_REQ_POS, ogoal, &cgoal));
 
   //uint16_t curpos;
   //for (size_t i = 0; i < 100; i++) {
