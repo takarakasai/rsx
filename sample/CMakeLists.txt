@@ -11,7 +11,12 @@ endif()
 set(APP_NAME rsx_app)
 
 set(DEPENDENCIES "dpservo")
-list(APPEND DEPENDENCIES pthread rt)
+
+if(${MINGW})
+  list(APPEND DEPENDENCIES pthread)
+elseif(${UNIX})
+  list(APPEND DEPENDENCIES pthread rt)
+endif()
 
 foreach(SRC ${SRCS})
   message(STATUS ${SRC})

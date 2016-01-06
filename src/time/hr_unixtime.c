@@ -6,10 +6,13 @@ typedef struct timespec hr_time;
 
 errno_t hr_get_time (hr_time *tm) {
   EVALUE(NULL, tm);
-  
+
+#if defined(__unix)
   int eno = clock_gettime(CLOCK_REALTIME, tm);
-  
   return eno == 0 ? EOK : errno;
+#else
+  return EOK;
+#endif
 }
 
 errno_t hr_diff_time (const hr_time *tm_bef, const hr_time *tm_aft, hr_time *tm_diff) {
@@ -17,6 +20,7 @@ errno_t hr_diff_time (const hr_time *tm_bef, const hr_time *tm_aft, hr_time *tm_
   EVALUE(NULL, tm_aft);
   EVALUE(NULL, tm_diff);
 
+#if defined(__unix)
   if (tm_aft->tv_nsec > tm_bef->tv_nsec) {
     tm_diff->tv_nsec = tm_aft->tv_nsec - tm_bef->tv_nsec;
     tm_diff->tv_sec  = tm_aft->tv_sec  - tm_bef->tv_sec;
@@ -24,6 +28,7 @@ errno_t hr_diff_time (const hr_time *tm_bef, const hr_time *tm_aft, hr_time *tm_
     tm_diff->tv_nsec = tm_aft->tv_nsec - tm_bef->tv_nsec + (1000 * 1000 * 1000);
     tm_diff->tv_sec  = tm_aft->tv_sec  - tm_bef->tv_sec - 1;
   }
+#endif
 
   return EOK;
 }
@@ -31,7 +36,9 @@ errno_t hr_diff_time (const hr_time *tm_bef, const hr_time *tm_aft, hr_time *tm_
 errno_t hr_dump_time (const hr_time *tm) {
   EVALUE(NULL, tm);
 
+#if defined(__unix)
   printf("%09zd%06zd.%03zd[usec]\n", tm->tv_sec, tm->tv_nsec / 1000, tm->tv_nsec % 1000);
+#endif
 
   return EOK;
 }

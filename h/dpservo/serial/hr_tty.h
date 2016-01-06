@@ -1,19 +1,15 @@
 
-#ifndef HR_SERIAL_H
-#define HR_SERIAL_H
+#ifndef HR_TTY_H
+#define HR_TTY_H
 
+#include "serial/hr_unixio.h"
+
+#include "dp_type.h"
 #include "dp_err.h"
 
-#include "hr_tty.h"
-#include "hr_unixio.h"
+/* for hr_tty */
+#include "hr_tty_impl.h"
 
-#define HR_SERIAL_DECL(name) \
-  hr_serial name
-
-#define HR_SERIAL_INIT(name) \
-  hr_serial_init(&name)
-
-#if 0
 typedef enum {
   HR_PAR_NONE,
   HR_PAR_EVEN,
@@ -90,21 +86,11 @@ static inline const char* hr_baudrate2str (hr_baudrate baudrate) {
     default           : return "HR_INVALID" ;
   }
 }
-#endif
 
-typedef struct {
-  hr_unixio io;
+errno_t hr_tty_init (hr_tty *tty);
 
-  hr_baudrate baudrate;
-
-  hr_tty tty;
-} hr_serial;
-
-errno_t hr_serial_init (hr_serial *ser);
-errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit, hr_baudrate baudrate, hr_parity parity);
-errno_t hr_serial_close (hr_serial *ser);
-errno_t hr_serial_write (hr_serial *ser, void* data, size_t size);
-errno_t hr_serial_read (hr_serial *ser, void* data, size_t size);
+errno_t hrtty_setup (hr_tty *tty, hr_unixio *io, hr_baudrate baudrate, hr_parity parity);
+errno_t hrtty_teardown (hr_tty *tty, hr_unixio *io);
 
 #endif
 

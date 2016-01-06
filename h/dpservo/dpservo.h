@@ -132,7 +132,7 @@ typedef struct {
   dps_get_id_op get_id;
 } dpservo_ops;
 
-inline errno_t dpservo_ops_init (
+static inline errno_t dpservo_ops_init (
         dpservo_ops *ops,
         dps_set_state_op set_state,
         dps_set_states_op set_states,
