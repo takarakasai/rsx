@@ -48,7 +48,7 @@ file(GLOB TIME_SRCS "src/time/*.c")
 list(APPEND SRCS ${SERIAL_SRCS} ${SERIAL_IMPL_SRCS} ${TIME_SRCS})
 
 if(${CMAKE_COMPILER_IS_GNUCC})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2 -std=gnu99 -D_GNU_SOURCE")
+    set(CMAKE_C_FLAGS "-Wall -O2 -std=gnu99 ")
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${SRCS})

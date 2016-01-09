@@ -214,6 +214,9 @@ errno_t rsx_pkt_ser (rsx_pkt *pkt, uint8_t dst[/*max_num*/], size_t max_num, siz
     dst[idx++] = pkt->address;
     /* length  */
     dst[idx++] = pkt->length;
+    if (pkt->id != 0x00) {
+      pkt->count = 1;
+    }
     /* count   */
     dst[idx++] = pkt->count;
     /* data    */

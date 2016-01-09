@@ -84,6 +84,7 @@ int run_test(int argc, char *argv[], hr_serial *hrs,
   ECALL(rsx_pkt_ser(&rpkt, buff, sizeof(buff), &size));
   ECALL(data_dump(buff, size));
   if (use_serial) ECALL(hr_serial_write(hrs, buff, size));
+  hr_usleep(100 * 1000);
   if (use_serial) ECALL(hr_serial_read(hrs, buff, size + 4)); // TODO: size + 2
   ECALL(data_dump(buff, size + 4));                           // TODO: size + 2
   ECALL(rsx_pkt_deser(&rpkt, buff, sizeof(buff), &size));
@@ -171,7 +172,7 @@ int main(int argc, char *argv[]) {
   hr_serial hrs;
   ECALL(hr_serial_init(&hrs));
   use_serial = true;
-  ECALL(hr_serial_open(&hrs, argv[1], argv[2], HR_B460800, HR_PAR_NONE));
+  ECALL(hr_serial_open(&hrs, argv[1], argv[2], HR_B115200, HR_PAR_NONE));
 
   run_test(argc, argv, &hrs, use_serial, servo_id, val);
 

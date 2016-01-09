@@ -5,7 +5,7 @@ project(rsx_sample)
 file(GLOB SRCS "src/*.c")
 
 if(${CMAKE_COMPILER_IS_GNUCC})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2 -std=gnu99 -D_GNU_SOURCE")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2 -std=gnu99")
 endif()
 
 set(APP_NAME rsx_app)

@@ -32,7 +32,7 @@ errno_t rsx_spkt_write (rsx *rsx) {
 
   size_t pkt_size;
   ECALL(rsx_pkt_ser(rsx->spkt, rsx->base.buff, rsx->base.max_size, &pkt_size));
-
+  ECALL(data_dump(rsx->base.buff, pkt_size));
   ECALL(hr_serial_write(rsx->base.hrs, rsx->base.buff, pkt_size));
 
   return eno;
@@ -118,7 +118,7 @@ errno_t rsx_spkt_mem_write_int16 (rsx *rsx, uint8_t id, uint8_t start_addr, uint
   RSX_SPKT_SETLENGTH(*(rsx->spkt), size * sizeof(int16_t));
 
   for (size_t i = 0; i < size; i += sizeof(int16_t)) {
-    RSX_SPKT_SET_INT16(*(rsx->lpkt), i, data[i]);
+    RSX_SPKT_SET_INT16(*(rsx->spkt), i, data[i]);
   }
 
   ECALL(rsx_spkt_write(rsx));
