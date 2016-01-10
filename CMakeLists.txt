@@ -52,6 +52,8 @@ if(${CMAKE_COMPILER_IS_GNUCC})
 endif()
 
 add_library(${PROJECT_NAME} SHARED ${SRCS})
+# for MinGW
+set_target_properties(${PROJECT_NAME} PROPERTIES IMPORT_SUFFIX ".lib")
 
 target_link_libraries(${PROJECT_NAME} ${DEPENDENCIES})
 

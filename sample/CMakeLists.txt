@@ -13,7 +13,7 @@ set(APP_NAME rsx_app)
 set(DEPENDENCIES "dpservo")
 
 if(${MINGW})
-  list(APPEND DEPENDENCIES pthread)
+  list(APPEND DEPENDENCIES)
 elseif(${UNIX})
   list(APPEND DEPENDENCIES pthread rt)
 endif()
