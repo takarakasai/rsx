@@ -41,7 +41,7 @@ foreach(SRC ${SRCS})
   add_dependencies(${name} ${DEPENDENCIES})
   target_link_libraries(${name} ${DEPENDENCIES})
 
-  list(APPEND MEX_FILES ${name}.${MEXEXT})
+  list(APPEND MEX_FILES ${CMAKE_CURRENT_BINARY_DIR}/${name}.${MEXEXT})
 
 endforeach()
 
