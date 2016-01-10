@@ -24,7 +24,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
     DP_MEX_GET_PRIMITIVE_ARRAY(double, len, angle, prhs[0]);
     
-    mexPrintf("id:%02x :");
+    mexPrintf("id:all :");
     for (size_t i = 0; i < len; i++) {
       mexPrintf(" %lf", angle[i]);
     }
