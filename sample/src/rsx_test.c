@@ -144,7 +144,10 @@ int main(int argc, char *argv[]) {
     hr_usleep(1000 * 1000);
     printf("--> SERVO OFF\n");
     dps_set_state(servo, id, kDpsServoOff);
+
   }
+
+  hr_usleep(1000 * 1000);
 
   ECALL(dps_teardown(servo, argc, argv));
 
