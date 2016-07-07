@@ -11,7 +11,7 @@
 #include "ics/mmap/ics3x.h"
 
 /*
- * ./build/sample/ics_test ttyUSB 0 low 255 -30 30 
+ * ./build/sample/ics_test ttyUSB 0 low ICS35 read 0 0x0D 1 
  */
 
 int main(int argc, char *argv[]) {
@@ -23,12 +23,13 @@ int main(int argc, char *argv[]) {
   char *device = "ttyUSB";
   char *port   = "0";
   hr_baudrate baudrate = HR_B115200;
+  int32_t version = ICS_VER_35;
   bool is_write = false;
   uint8_t id = 1;
   uint8_t start_addr = 0x00;
   uint8_t rwsize = 0;
 
-  if (argc >= 8) {
+  if (argc >= 9) {
     device = argv[1];
     port   = argv[2];
 
@@ -40,35 +41,40 @@ int main(int argc, char *argv[]) {
       baudrate =  HR_B115200;
     }
 
-    if (strcmp(argv[4], "write") == 0) {
+    if (strcmp(argv[4], "ICS30") == 0) {
+      version = ICS_VER_30;
+    }
+
+    if (strcmp(argv[5], "write") == 0) {
       is_write = true;
     }
 
-    id = (uint8_t)strtoul(argv[5], NULL, 10);
+    id = (uint8_t)strtoul(argv[6], NULL, 10);
 
-    start_addr = (uint8_t)strtoul(argv[6], NULL, 16);
+    start_addr = (uint8_t)strtoul(argv[7], NULL, 16);
 
-    rwsize = (uint8_t)strtoul(argv[7], NULL, 10);
+    rwsize = (uint8_t)strtoul(argv[8], NULL, 10);
 
   } else {
-    fprintf(stdout, "[USAGE] %s dev port high|mid|low write|read id start_addr size [data] \n", argv[0]);
+    fprintf(stdout, "[USAGE] %s dev port high|mid|low ICS<30|35> write|read id start_addr size [data] \n", argv[0]);
     return 0;
   }
 
   uint8_t data[rwsize];
   memset(data, 0x00, rwsize);
   if (is_write) {
-    if (argc == 8) {
-      fprintf(stdout, "[USAGE] %s dev port high|mid|low write|read id start_addr size [data] \n", argv[0]);
+    if (argc == 9) {
+      fprintf(stdout, "[USAGE] %s dev port high|mid|low ICS<30|35> write|read id start_addr size [data] \n", argv[0]);
       return 0;
     }
     size_t idx = 0;
-    for (size_t i = 8; i < argc && idx < rwsize; i++) {
+    for (size_t i = 9; i < argc && idx < rwsize; i++) {
       data[idx++] = (uint8_t)strtoul(argv[i], NULL, 16);
     }
   }
 
   printf("===: %s/%s with %s(%s)\n", device, port, hr_baudrate2str(baudrate), argv[3]);
+  printf("===: ICS : ver %s\n", version == ICS_VER_30 ? "ICS3.0" : "ICS3.5(default)");
   printf("===:   ID: %d\n", id);
   printf("===: ADDR: 0x%02x\n", start_addr);
   printf("===: SIZE: %d\n", rwsize);
@@ -85,11 +91,11 @@ int main(int argc, char *argv[]) {
   ECALL(dps_set_serial(servo, use_serial));
 
   if (is_write) {
-    ECALL(dps_mem_write(servo, id, start_addr, rwsize, data, ICS_VER_30));
+    ECALL(dps_mem_write(servo, id, start_addr, rwsize, data, version));
     printf("----- write done -----\n");
   }
 
-  ECALL(dps_mem_read(servo, id, start_addr, rwsize, data, ICS_VER_30));
+  ECALL(dps_mem_read(servo, id, start_addr, rwsize, data, version));
   for (size_t i = 0; i < rwsize; i++) {
     printf(" %02zd", start_addr + i);
   }
