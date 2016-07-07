@@ -691,6 +691,15 @@ errno_t ics_read_set_param_rep (ics *ics, uint8_t id, uint8_t wsize, uint8_t wda
   return EOK;
 }
 
+errno_t ics_set_param_wo_reply (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsize*/], ics_opt_t option) {
+  EVALUE(NULL, ics);
+
+  ECALL(ics_write_set_param_req(ics, id, wsize, wdata, option));
+  hr_usleep(1000 * 1000);
+
+  return EOK;
+}
+
 errno_t _ics_set_param (ics *ics, uint8_t id, uint8_t wsize, uint8_t wdata[/*wsize*/], ics_opt_t option) {
   EVALUE(NULL, ics);
 
@@ -767,6 +776,7 @@ static errno_t servo_mem_write (
     ECALL(ics_set_param((ics*)dps, id, eeprom_size, eeprom, option));
   } else {
     fprintf(stdout, " %s: you change baudrate, you must restart program with new baudrate.\n", __FUNCTION__);
+    ECALL(ics_set_param_wo_reply((ics*)dps, id, eeprom_size, eeprom, option));
   }
 
   return EOK;
