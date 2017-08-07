@@ -31,6 +31,7 @@
   do {                      \
     errno_t eno = function; \
     if (eno != EOK) {        \
+      printf("error %s:%d eno:%d\n", __func__, __LINE__, eno);  \
       return eno;           \
     }                       \
   } while(0)

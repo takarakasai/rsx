@@ -1,12 +1,18 @@
 
 #include "serial/hr_serial.h"
-#include "rsx_err.h"
+
+#include <assert.h>
 
 /* for error print */
 #include <stdio.h>
 
 /* for memset */
 #include <string.h>
+
+#include <stdbool.h>
+
+#include "rsx_err.h"
+#include "rsx_common.h"
 
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);
@@ -101,11 +107,13 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
 
 errno_t hr_serial_close (hr_serial *ser) {
   EVALUE(NULL, ser);
+  EVALUE(0, ser->fd);
 
   ECALL(setattr(ser->fd, &(ser->prev_term)));
-  ser->fd = 0;
 
   ECALL(_close(ser->fd));
+
+  ser->fd = 0;
 
   return EOK;
 }
@@ -113,18 +121,98 @@ errno_t hr_serial_close (hr_serial *ser) {
 errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   EVALUE(NULL, ser);
 
-  size_t read_size;
-  ECALL(_read(ser->fd, data, size, &read_size));
-  printf("=== %zd %zd\n", size, read_size);
+  enum {
+    kSearchDeliminator = 0,
+    kReadHeader        = 1,
+    kSkipPacket        = 2,
+    kReadBody          = 3
+  } state;
 
-  if (size != read_size) {
-    printf("error %s %zd / %zd\n", __FUNCTION__, read_size, size);
-    for (size_t i = 0; i < read_size; i++) {
-      printf(" %02x", ((uint8_t*)data)[i]);
+  /* | ==================== PACKET ===================| */
+  /* | -------------- HEADER ------------ |-- Body ---| */
+  /* | DLIMINATOR |                       |     |     | */
+  /* | LOW | HIGH | ID  | FLG | ADR | LEN | CNT | DAT | SUM |  */
+  /*    1     1      1     1     1     1     1    LEN       1  */
+  /*    0     1      2     3     4     5     6 7-7+LEN-1 7+LEN */
+
+  /* ==== FSM ==== */
+  /* SearchDeliminator --> ReadHeader --> ReadBody */
+  /*       ^                    |                  */
+  /*       +--------------------+                  */
+
+  state = kSearchDeliminator;
+  size_t packet_size  = 0;
+  size_t read_size    = 0;
+  size_t zcount       = 0;
+  RSX_DEBUG_PRINT("Start=============================\n");
+  do {
+    RSX_DEBUG_PRINT("state %d %zd\n", state, read_size);
+    size_t siz;
+    if (state == kSearchDeliminator || state == kReadHeader) {
+      assert(read_size < 6);
+      ECALL(_read(ser->fd, data + read_size, 6 - read_size, &siz));
+      RSX_DEBUG_PRINT(" Dlim : %zd --> %zd\n", 6 - read_size, siz);
+    } else if (state == kSkipPacket) {
+      assert(read_size < packet_size);
+      ECALL(_read(ser->fd, data + read_size, packet_size - read_size, &siz));
+      RSX_DEBUG_PRINT(" Skip : %zd --> %zd\n", packet_size - read_size, siz);
+    } else {
+      assert(read_size < size);
+      ECALL(_read(ser->fd, data + read_size, size - read_size, &siz));
+      RSX_DEBUG_PRINT(" Other : %zd --> %zd\n", size - read_size, siz);
     }
-    printf("\n");
-    return -1;
-  }
+    read_size += siz;
+
+    if (state == kSearchDeliminator) {
+      if (read_size >= 2) {
+        for (size_t i = 0; i < read_size - 1; i++) {
+          if ((((uint8_t*)data)[i]     == 0xFD) &&
+              (((uint8_t*)data)[i + 1] == 0xDF)) {
+            RSX_DEBUG_PRINT("%s : skip %ld [B]\n", __func__, i);
+            memmove(data, data + i, read_size - i);
+            read_size -= i;
+            state = kReadHeader;
+          }
+        }
+        if (state == kSearchDeliminator) {
+          read_size = 0;
+        }
+      }
+    }
+    if (state == kReadHeader) {
+      if (read_size >= 5) {
+        uint8_t len = ((uint8_t*)data)[5];
+        // FIXME(takara.kasai@gmail.com) : 8 to be changed to RSX_PKT_SIZE_MIN
+        packet_size = len + 8;
+        RSX_DEBUG_PRINT("read header %zd > %zd\n", size, packet_size);
+        if (size == packet_size) {
+          state = kReadBody;
+        } else {
+          state = kSkipPacket;
+        }
+      }
+    }
+    if (state == kSkipPacket) {
+      if (read_size >= packet_size) {
+        RSX_DEBUG_PRINT("skip packet %zd > %zd\n", read_size, packet_size);
+        state = kReadHeader;
+        read_size = 0;
+        packet_size = 0;
+      }
+    }
+    if (state == kReadBody) {
+      if (read_size >= size) {
+        break;
+      }
+    }
+
+    if (siz == 0) {
+      zcount++;
+      if (zcount > 10) {
+        return -1;
+      }
+    }
+  } while(1);
 
   return EOK;
 }
@@ -141,8 +229,9 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
 
 #if defined(HR_SERIAL_AUTO_READ_ECHO_DATA)
   usleep(5 * 1000);
+  uint8_t echo;
   size_t read_size;
-  ECALL(_read(ser->fd, data, size, &read_size));
+  ECALL(_read(ser->fd, &echo, 1, &read_size));
 #endif
 
   return EOK;
