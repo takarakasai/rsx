@@ -13,9 +13,5 @@
 
   ECALL(rsx_set_goal_position(&rsx, hrs, id, +90.0/*[deg]*/)):
 
-  RSX_SPKT_SETID(spkt, 0x01);
-  RSX_SPKT_SETADDR(spkt, 0x1e);
-  RSX_SPKT_SETLENGTH(spkt, 0x02);
-
   ECALL(hr_serial_close(&hrs));
 ```
