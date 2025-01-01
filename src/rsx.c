@@ -434,13 +434,13 @@ errno_t rsx_set_goal_position_raw(rsx* rsx, hr_serial* hrs, uint8_t id, int16_t 
   return EOK;
 }
 
-/* goal : [-1000, 1000] [%] */
+/* goal : [-100.0, 100.0] [%] */
 errno_t rsx_set_goal_torque(rsx* rsx, hr_serial* hrs, uint8_t id, float goal) {
   ECALL(rsx_oneshot_sync_write_word(rsx, hrs, id, 0x27, (int16_t)(goal * 10)));
   return EOK;
 }
 
-/* goal : [-32700, 32700] [deg] */
+/* goal : [-3270.0, 3270.0] [deg] */
 errno_t rsx_set_goal_position(rsx* rsx, hr_serial* hrs, uint8_t id, float goal) {
   ECALL(rsx_oneshot_sync_write_word(rsx, hrs, id, 0x1e, (int16_t)(goal * 10)));
   return EOK;

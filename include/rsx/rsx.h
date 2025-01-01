@@ -134,13 +134,14 @@ errno_t rsx_servo_set_control_mode(rsx* rsx, hr_serial* hrs, uint8_t id, rsx_con
 errno_t rsx_servo_on(rsx* rsx, hr_serial* hrs, uint8_t id);
 errno_t rsx_servo_off(rsx* rsx, hr_serial* hrs, uint8_t id);
 
+/* torque:[-1000, 1000] [0.1%], veloc:[-100,100] [rpm], pos:[-32700,32700] [0.1deg] */
 errno_t rsx_set_goal_torque_raw(rsx* rsx, hr_serial* hrs, uint8_t id, int16_t goal);
 errno_t rsx_set_goal_velocity_raw(rsx* rsx, hr_serial* hrs, uint8_t id, int16_t goal);
 errno_t rsx_set_goal_position_raw(rsx* rsx, hr_serial* hrs, uint8_t id, int16_t goal);
 
-/* goal : [-1000, 1000] [%] */
+/* goal : [-100.0, 100.0] [%] */
 errno_t rsx_set_goal_torque(rsx* rsx, hr_serial* hrs, uint8_t id, float goal);
-/* goal : [-32700, 32700] [deg] */
+/* goal : [-3270.0, 3270.0] [deg] */
 errno_t rsx_set_goal_position(rsx* rsx, hr_serial* hrs, uint8_t id, float goal);
 
 errno_t rsx_set_goal_positions_raw(  //
