@@ -15,10 +15,10 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
   EVALUE(NULL, hrs);
 
   uint8_t ids[] = {0x01, 0x02};
-  int16_t goals[][2] = {
-    /* unit: 0.1[deg] */
-    {-900, -900},
-    {+900, +900}
+  float goals[][2] = {
+    /* unit: [-3270.0, +3270.0][deg] */
+    {-90.0, -90.0},
+    {+90.0, +90.0}
   };
  
   rsx rsx;
@@ -38,13 +38,13 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
 
   size_t count = 0;
   do {
-    rsx_set_goal_positions_raw(&rsx, hrs, ids, goals[0], 2);
+    rsx_set_goal_positions(&rsx, hrs, ids, goals[0], 2);
     for (size_t i = 0; i < 5; i++) {
       ECALL(get_current_status_all(&rsx, hrs, ids, 2));
       usleep(100 * 1000);
     }
 
-    rsx_set_goal_positions_raw(&rsx, hrs, ids, goals[1], 2);
+    rsx_set_goal_positions(&rsx, hrs, ids, goals[1], 2);
     for (size_t i = 0; i < 5; i++) {
       ECALL(get_current_status_all(&rsx, hrs, ids, 2));
       usleep(100 * 1000);
