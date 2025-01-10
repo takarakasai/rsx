@@ -144,8 +144,17 @@ errno_t rsx_set_goal_torque(rsx* rsx, hr_serial* hrs, uint8_t id, float goal);
 /* goal : [-3270.0, 3270.0] [deg] */
 errno_t rsx_set_goal_position(rsx* rsx, hr_serial* hrs, uint8_t id, float goal);
 
+errno_t rsx_set_goal_toruqes_raw(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num);
+errno_t rsx_set_goal_velocities_raw(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num);
 errno_t rsx_set_goal_positions_raw(  //
     rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num);
+
+errno_t rsx_set_goal_torques(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], float goals[/*num*/], size_t num);
+errno_t rsx_set_goal_positions(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], float goals[/*num*/], size_t num);
 
 #endif
 

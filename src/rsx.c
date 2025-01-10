@@ -446,8 +446,40 @@ errno_t rsx_set_goal_position(rsx* rsx, hr_serial* hrs, uint8_t id, float goal) 
   return EOK;
 }
 
+errno_t rsx_set_goal_torques_raw(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num) {
+  ECALL(rsx_bulk_write_word(rsx, hrs, 0x27, ids, (uint16_t*)goals, num));
+  return EOK;
+}
+
+errno_t rsx_set_goal_velocities_raw(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num) {
+  ECALL(rsx_bulk_write_word(rsx, hrs, 0x25, ids, (uint16_t*)goals, num));
+  return EOK;
+}
+
 errno_t rsx_set_goal_positions_raw(  //
     rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], int16_t goals[/*num*/], size_t num) {
   ECALL(rsx_bulk_write_word(rsx, hrs, 0x1e, ids, (uint16_t*)goals, num));
+  return EOK;
+}
+
+errno_t rsx_set_goal_torques(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], float goals[/*num*/], size_t num) {
+  int16_t i_goals[num];
+  for (size_t i = 0; i < num; i++) {
+    i_goals[i] = (int16_t)(goals[i] * 10);
+  }
+  ECALL(rsx_bulk_write_word(rsx, hrs, 0x27, ids, (uint16_t*)i_goals, num));
+  return EOK;
+}
+
+errno_t rsx_set_goal_positions(  //
+    rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], float goals[/*num*/], size_t num) {
+  int16_t i_goals[num];
+  for (size_t i = 0; i < num; i++) {
+    i_goals[i] = (int16_t)(goals[i] * 10);
+  }
+  ECALL(rsx_bulk_write_word(rsx, hrs, 0x1e, ids, (uint16_t*)i_goals, num));
   return EOK;
 }
