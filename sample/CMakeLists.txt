@@ -8,6 +8,7 @@ set(SRCS
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_position.c"
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_torque.c"
   "${PROJECT_SOURCE_DIR}/sample/src/bulk_position.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/bulk_torque.c"
 )
 
 set(COMMON_SRCS
