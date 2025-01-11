@@ -17,8 +17,6 @@
 #include "rsx_err.h"
 #include "rsx_common.h"
 
-#define RSX_DEBUG_PRINT2(...) printf(__VA_ARGS__);
-
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);
 
@@ -177,6 +175,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
     kSkipPacket        = 2,
     kReadBody          = 3
   } state;
+  state = kSearchDeliminator;
 
   /* | ==================== PACKET ===================| */
   /* | -------------- HEADER ------------ |-- Body ---| */
@@ -190,56 +189,41 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   /*       ^                    |                  */
   /*       +--------------------+                  */
 
-  state = kSearchDeliminator;
-  size_t packet_size  = 0;
-  // size_t read_size    = 0;
   static size_t read_size   = 0;
   static uint8_t buff[1024] = {0x00};
+
+  size_t packet_size  = 0;
   size_t zcount       = 0;
-  RSX_DEBUG_PRINT2("Start============================= %zd\n", read_size);
-  for (size_t i = 0; i < read_size; i++) {
-    printf(" %02x", buff[i]);
-  }
-  printf("\n");
+  RSX_DEBUG_PRINT("Start============================= %zd\n", read_size);
   do {
-    RSX_DEBUG_PRINT2("state %d %zd\n", state, read_size);
+    RSX_DEBUG_PRINT("state %d %zd\n", state, read_size);
     size_t siz = -1;
     if (state == kSearchDeliminator || state == kReadHeader) {
       if (read_size < 6) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Dlim : %zd --> %zd\n", read_size, siz);
+        RSX_DEBUG_PRINT(" Dlim : %zd --> %zd\n", read_size, siz);
         read_size += siz;
       }
-      // assert(read_size < 6);
-      // ECALL(_read(ser->fd, data + read_size, 6 - read_size, &siz));
-      // RSX_DEBUG_PRINT2(" Dlim : %zd --> %zd\n", 6 - read_size, siz);
     } else if (state == kSkipPacket) {
       if (read_size < packet_size) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Skip : pkt:%zd size:%zd --> %zd\n", packet_size, read_size, siz);
+        RSX_DEBUG_PRINT(" Skip : pkt:%zd size:%zd --> %zd\n", packet_size, read_size, siz);
         read_size += siz;
       }
-      // assert(read_size < packet_size);
-      // ECALL(_read(ser->fd, data + read_size, packet_size - read_size, &siz));
-      // RSX_DEBUG_PRINT2(" Skip : %zd --> %zd\n", packet_size - read_size, siz);
     } else {
       if (read_size < size) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Other : %zd --> %zd\n", read_size, siz);
+        RSX_DEBUG_PRINT(" Other : %zd --> %zd\n", read_size, siz);
         read_size += siz;
       }
-      // assert(read_size < size);
-      // ECALL(_read(ser->fd, data + read_size, size - read_size, &siz));
-      // RSX_DEBUG_PRINT2(" Other : %zd --> %zd\n", size - read_size, siz);
     }
-    // read_size += siz;
 
     if (state == kSearchDeliminator) {
       if (read_size >= 2) {
         for (size_t i = 0; i < read_size - 1; i++) {
           if ((((uint8_t*)buff)[i]     == 0xFD) &&
               (((uint8_t*)buff)[i + 1] == 0xDF)) {
-            RSX_DEBUG_PRINT2("%s : skip %ld [B]\n", __func__, i);
+            RSX_DEBUG_PRINT("%s : skip %ld [B]\n", __func__, i);
             memmove(buff, buff + i, read_size - i);
             read_size -= i;
             state = kReadHeader;
@@ -257,10 +241,6 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
         // FIXME(takara.kasai@gmail.com) : 8 to be changed to RSX_PKT_SIZE_MIN
         packet_size = len + 8;
         RSX_DEBUG_PRINT("read header %zd > %zd (%02x + 0x08)\n", size, packet_size, len);
-        for (int i = 0; i < 6; i++) {
-          printf(" %02x", ((uint8_t*)buff)[i]);
-        }
-        printf("\n");
         if (size == packet_size) {
           state = kReadBody;
         } else {
@@ -270,7 +250,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
     }
     if (state == kSkipPacket) {
       if (read_size >= packet_size) {
-        RSX_DEBUG_PRINT2("skip packet %zd > %zd\n", read_size, packet_size);
+        RSX_DEBUG_PRINT("skip packet %zd > %zd\n", read_size, packet_size);
         state = kSearchDeliminator;
         memmove(buff, buff + packet_size, read_size - packet_size);
         read_size = 0;
@@ -282,11 +262,6 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
         memcpy(data, buff, size);
         memmove(buff, buff + size, read_size - size);
         read_size -= size;
-        printf("OK(%zd,remain:%zd):", size, read_size);
-        for (size_t i = 0; i < size; i++) {
-          printf(" %02x", ((uint8_t*)data)[i]);
-        }
-        printf("\n");
         break;
       }
     }
@@ -295,13 +270,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
       zcount++;
       // usleep(100);
       if (zcount > 0) {
-        printf("======================== exit : size:%zd expect:%zd state:%d\n", read_size, size, state);
-        for (size_t i = 0; i < read_size; i++) {
-          printf(" %02x", ((uint8_t*)buff)[i]);
-        }
-        printf("\n");
-        // assert(false);
-        return -1;
+        return ETIMEDOUT;
       }
     } else {
       zcount = 0;

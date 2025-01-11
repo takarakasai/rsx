@@ -52,11 +52,6 @@ errno_t _read (int fd, void* data, size_t size, size_t *read_size) {
   }
 
   *read_size = res;
-  printf("res:%d > %zd %zd : ", res, *read_size, size);
-  for (int i = 0; i < res; i++) {
-    printf(" %02x", ((uint8_t*)data)[i]);
-  }
-  printf("\n");
 
   return EOK;
 }

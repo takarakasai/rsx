@@ -3,14 +3,14 @@
 #include <stdlib.h>
 
 static const int kAvailableBaudrates[] = {
-//  9600,
-//  14400,
-//  19200,
-//  28800,
-//  38400,
-//  57600,
+  9600,
+  14400,
+  19200,
+  28800,
+  38400,
+  57600,
   115200,
-//  153600,
+  153600,
   230400,
   // 460800
 };
@@ -731,8 +731,7 @@ errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
     }
     printf("\n");
 
-    // for (uint8_t r_id = 0; r_id < 127; r_id++) {
-    for (uint8_t r_id = 0; r_id < 3; r_id++) {
+    for (uint8_t r_id = 0; r_id < 127; r_id++) {
       printf(" %02x", r_id); fflush(stdout);
       eno = rsx_check_connection(rsx, hrs, r_id);
       if (eno == EOK) {
