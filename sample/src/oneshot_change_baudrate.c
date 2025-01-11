@@ -66,14 +66,15 @@ int main(int argc, char *argv[]) {
   hr_serial hrs;
   ECALL(hr_serial_init(&hrs));
 
-  uint8_t id = 0x02;
+  // uint8_t id = 0x02;
+  uint8_t id = 0x01;
   char* dev  = "ttyUSB";
-  char* unit = "1";
+  char* unit = "0";
   if (argc >= 3) {
     dev  = argv[1];
     unit = argv[2];
   }
-
+  printf("open %s %s\n", dev, unit);
   ECALL(hr_serial_open(&hrs, dev, unit));
 
   change_baudrate(&rsx, &hrs, id, 230400);

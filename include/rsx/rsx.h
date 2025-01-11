@@ -171,4 +171,7 @@ errno_t rsx_set_id(rsx* rsx, hr_serial* hrs, uint8_t id_from, uint8_t id_to);
 errno_t rsx_set_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int baudrate);
 errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate);
 
+/* utility commands */
+errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* bandrate, uint8_t* id);
+
 #endif

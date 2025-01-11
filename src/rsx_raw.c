@@ -6,7 +6,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define RSX_DEBUG_PRINT_ENABLE
 #include <rsx_common.h>
 
 errno_t rsx_pkt_get_size (const rsx_pkt *pkt, size_t *size) {
@@ -131,12 +130,14 @@ errno_t rsx_pkt_deser (rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num, s
   }
 
   if (pkt->check_sum != src[idx]) {
-    assert(false);
     RSX_DEBUG_EPRINT("check sum error: %02x vs %02x\n", pkt->check_sum, src[idx]);
     for (size_t i = 0; i < idx; i++) {
       RSX_DEBUG_EPRINT(" %02x", src[i]);
     }
     RSX_DEBUG_EPRINT("\n");
+    RSX_DEBUG_EPRINT("============================\n");
+    // assert(false);
+    return EILSEQ;
   }
   idx++;
   *size = idx;

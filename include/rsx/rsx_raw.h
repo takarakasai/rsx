@@ -1,9 +1,9 @@
 #ifndef RSX_RAW_H_
 #define RSX_RAW_H_
 
-#if defined(DATA_DUMP)
+// #if defined(DATA_DUMP)
 #include <stdio.h>
-#endif
+// #endif
 
 #include "rsx_type.h"
 #include "rsx_err.h"
@@ -139,13 +139,13 @@ errno_t rsx_pkt_ser (rsx_pkt *pkt, uint8_t dst[/*max_num*/], size_t max_num, siz
 static inline errno_t data_dump (uint8_t *data, size_t size) {
   EVALUE(NULL, data);
 
-#if defined(DATA_DUMP)
+// #if defined(DATA_DUMP)
   printf("size:%04zd ::", size);
   for (size_t i = 0; i < size; i++) {
     printf(" %02x", data[i]);
   }
   printf("\n");
-#endif
+// #endif
 
   return EOK;
 }

@@ -14,9 +14,7 @@
 int run_app(int argc, char *argv[], hr_serial *hrs) {
   EVALUE(NULL, hrs);
 
-  size_t count = 0;
-
-  uint8_t id = 0x01;
+  uint8_t ids[] = {0x01, 0x02};
 
   rsx rsx;
   rsx_config rsx_config;
@@ -26,29 +24,12 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
 
   usleep(200*1000);
 
-  ECALL(rsx_servo_set_control_mode(&rsx, hrs, id, RSX_POS_CONTROL));
-
-  ECALL(rsx_servo_on(&rsx, hrs, id));
-
-  printf("start control\n");
-  do {
-    rsx_set_goal_position(&rsx, hrs, id, +90.0/*[deg]*/);
-    for (size_t i = 0; i < 5; i++) {
-      ECALL(get_current_status(&rsx, hrs, id));
-      usleep(100 * 1000);
-    }
-
-    rsx_set_goal_position(&rsx, hrs, id, -90.0/*[deg]*/);
-    for (size_t i = 0; i < 5; i++) {
-      ECALL(get_current_status(&rsx, hrs, id));
-      usleep(100 * 1000);
-    }
-  } while(count++ < 5);
-  printf("finish control\n");
-
-  ECALL(rsx_servo_off(&rsx, hrs, id));
-
-  printf("\033[5B");
+  for (int i = 0; i < sizeof(ids)/sizeof(ids[0]); i++) {
+    printf("----------- ROM --------------\n");
+    ECALL(GetROMInfo(&rsx, hrs, ids[i]));
+    printf("----------- RAM --------------\n");
+    ECALL(GetRAMInfo(&rsx, hrs, ids[i]));
+  }
 
   return 0;
 }

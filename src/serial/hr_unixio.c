@@ -3,6 +3,8 @@
 
 #include "rsx_err.h"
 
+#include <assert.h>
+
 /* for error print */
 #include <stdio.h>
 
@@ -14,11 +16,13 @@
 /* for close */
 #include <unistd.h>
 
+#include "rsx_common.h"
+
 errno_t _open (const char *path, int *fd) {
   EVALUE(NULL, path);
   EVALUE(NULL, fd);
 
-  printf("file open : %s\n", path);
+  RSX_DEBUG_PRINT("file open : %s\n", path);
   *fd = open(path, O_RDWR | O_NOCTTY);
   if (*fd == -1) {
     printf("file can not open : %d\n", errno);
@@ -48,6 +52,8 @@ errno_t _read (int fd, void* data, size_t size, size_t *read_size) {
   }
 
   *read_size = res;
+  printf("res:%d > %zd %zd\n", res, *read_size, size);
+
   return EOK;
 }
 

@@ -36,6 +36,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
     ECALL(rsx_servo_on(&rsx, hrs, ids[i]));
   }
 
+  printf("start control\n");
   size_t count = 0;
   do {
     rsx_set_goal_positions(&rsx, hrs, ids, goals[0], 2);
@@ -50,6 +51,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
       usleep(100 * 1000);
     }
   } while(count++ < 5);
+  printf("finish control\n");
 
   for (size_t i = 0; i < sizeof(ids)/sizeof(ids[0]); i++) {
     ECALL(rsx_servo_off(&rsx, hrs, ids[i]));
@@ -65,11 +67,14 @@ int main(int argc, char *argv[]) {
   ECALL(hr_serial_init(&hrs));
   ECALL(hr_serial_set_baudrate(&hrs, 230400));
 
+  char* dev  = "ttyUSB";
+  char* unit = "0";
   if (argc >= 3) {
-    ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
-  } else {
-    ECALL(hr_serial_open(&hrs, "ttyUSB", "1"));
+    dev  = argv[1];
+    unit = argv[2];
   }
+  printf("open %s %s\n", dev, unit);
+  ECALL(hr_serial_open(&hrs, dev, unit));
 
   run_app(argc, argv, &hrs);
 

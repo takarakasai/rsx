@@ -2,6 +2,19 @@
 
 #include <stdlib.h>
 
+static const int kAvailableBaudrates[] = {
+//  9600,
+//  14400,
+//  19200,
+//  28800,
+//  38400,
+//  57600,
+  115200,
+//  153600,
+  230400,
+  // 460800
+};
+ 
 static errno_t int_to_baudrate(int from, uint8_t* to) {
   EVALUE(NULL, to);
 
@@ -171,6 +184,8 @@ errno_t rsx_bulk_write_impl (rsx* rsx, hr_serial* hrs) {
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
   ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
 
+  usleep(1000);
+
   return EOK;
 }
 
@@ -181,27 +196,48 @@ errno_t rsx_oneshot_read_impl (
   size_t pkt_size;
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
 
+  const size_t kTimeout = 1000;
   size_t count = 0;
   rsx->read_size = pkt_size + payload_size;
   do {
-    errno_t eno = 0;
+    errno_t eno = -1;
     // ECALL(data_dump(rsx->wbuff, pkt_size));
+    // printf(" "); fflush(stdout);
     ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
-    usleep(100 * 1000);
+    // printf("-"); fflush(stdout);
+    // usleep(1 * 1000);
+    // usleep(1 * 1000);
 
     // RSX_SPKT_SETFLAG(rsx->pkt, addr);
 
-    eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
-    if (eno == EOK) {
-      // ECALL(data_dump(rsx->rbuff, rsx->read_size));
-      eno = rsx_pkt_deser(&(rsx->pkt), rsx->rbuff, rsx->max_frame_size, &pkt_size);
-      if (eno == EOK) {
-        break;
-      }
-    }
-  } while (count++ < 10);
+      size_t cnt = 0;
+      do {
+        // usleep(10 * 1000);
+        usleep(500);
+        eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
+        // printf("="); fflush(stdout);
+        if (eno == EOK) {
+          // ECALL(data_dump(rsx->rbuff, rsx->read_size));
+          eno = rsx_pkt_deser(&(rsx->pkt), rsx->rbuff, rsx->max_frame_size, &pkt_size);
+          if (eno == EOK) {
+            printf("OK : %zd:%zd\n", count, cnt);
+            goto AAA;
+            assert(0);
+            break;
+          }
+        } else {
+          // printf("recv size: %zd\n", ); fflush(stdout);
+        }
+      } while(cnt++ > 100);
+  } while (count++ < kTimeout);
 
-  if (count >= 10) {
+  if (count >= 2) {
+    printf("-==>%zd\n\n\n\n", count);
+  }
+
+AAA:
+
+  if (count >= kTimeout) {
     return ETIMEDOUT;
   }
 
@@ -233,7 +269,7 @@ errno_t rsx_oneshot_sync_write_impl (
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
   // ECALL(data_dump(rsx->wbuff, pkt_size));
   ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
-  usleep(50 * 1000);
+  usleep(100 * 1000);
 
   ECALL(rsx_spkt_conv_read_cmd(&(rsx->pkt)));
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
@@ -337,9 +373,9 @@ errno_t rsx_oneshot_read_bytes_impl (
   RSX_SPKT_SETADDR(rsx->pkt, addr);
   RSX_SPKT_SETLENGTH(rsx->pkt, size /* Byte */);
 
-  ECALL(rsx_oneshot_read_impl(rsx, hrs, size /* Byte */));
+  errno_t eno = rsx_oneshot_read_impl(rsx, hrs, size /* Byte */);
 
-  return EOK;
+  return eno;
 }
 
 errno_t rsx_oneshot_read_words_impl (
@@ -352,9 +388,9 @@ errno_t rsx_oneshot_read_words_impl (
   RSX_SPKT_SETADDR(rsx->pkt, addr);
   RSX_SPKT_SETLENGTH(rsx->pkt, 2 * words /* Byte */);
 
-  ECALL(rsx_oneshot_read_impl(rsx, hrs, 2 * words /* Byte */));
+  errno_t eno = rsx_oneshot_read_impl(rsx, hrs, 2 * words /* Byte */);
 
-  return EOK;
+  return eno;
 }
 
 /* this command would be disabled after saving 60k [times]. */
@@ -473,39 +509,47 @@ errno_t rsx_bulk_write_words (  //
 errno_t rsx_oneshot_read_byte (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint8_t* data) {
   EVALUE(NULL, data);
-  ECALL(rsx_oneshot_read_bytes_impl(rsx, hrs, id, addr, 1));
-  *data = RSX_SPKT_GET_U8(rsx->pkt, 0);
-  return EOK;
+  errno_t eno = rsx_oneshot_read_bytes_impl(rsx, hrs, id, addr, 1);
+  if (eno == EOK) {
+    *data = RSX_SPKT_GET_U8(rsx->pkt, 0);
+  }
+  return eno;
 }
 
 errno_t rsx_oneshot_read_bytes (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint8_t data[num]) {
   EVALUE(NULL, data);
-  ECALL(rsx_oneshot_read_bytes_impl(rsx, hrs, id, addr, num));
-  // FIXME(takara.kasai@gmail.com): memcpy to be used.
-  for (size_t i = 0; i < num; i++) {
-    data[i] = RSX_SPKT_GET_U8(rsx->pkt, i);
+  errno_t eno = rsx_oneshot_read_bytes_impl(rsx, hrs, id, addr, num);
+  if (eno == EOK) {
+    // FIXME(takara.kasai@gmail.com): memcpy to be used.
+    for (size_t i = 0; i < num; i++) {
+      data[i] = RSX_SPKT_GET_U8(rsx->pkt, i);
+    }
   }
-  return EOK;
+  return eno;
 }
 
 errno_t rsx_oneshot_read_word (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint16_t* data) {
   EVALUE(NULL, data);
-  ECALL(rsx_oneshot_read_words_impl(rsx, hrs, id, addr, 1));
-  *data = rsx_get_u16(RSX_SPKT_GET_U8(rsx->pkt, 1), RSX_SPKT_GET_U8(rsx->pkt, 0));
-  return EOK;
+  errno_t eno = rsx_oneshot_read_words_impl(rsx, hrs, id, addr, 1);
+  if (eno == EOK) {
+    *data = rsx_get_u16(RSX_SPKT_GET_U8(rsx->pkt, 1), RSX_SPKT_GET_U8(rsx->pkt, 0));
+  }
+  return eno;
 }
 
 errno_t rsx_oneshot_read_words (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint16_t data[num]) {
   EVALUE(NULL, data);
-  ECALL(rsx_oneshot_read_words_impl(rsx, hrs, id, addr, num));
-  for (size_t i = 0; i < num; i++) {
-    data[i] = rsx_get_u16(RSX_SPKT_GET_U8(rsx->pkt, 2 * i + 1),  //
-                          RSX_SPKT_GET_U8(rsx->pkt, 2 * i + 0));
+  errno_t eno = rsx_oneshot_read_words_impl(rsx, hrs, id, addr, num);
+  if (eno == EOK) {
+    for (size_t i = 0; i < num; i++) {
+      data[i] = rsx_get_u16(RSX_SPKT_GET_U8(rsx->pkt, 2 * i + 1),  //
+                            RSX_SPKT_GET_U8(rsx->pkt, 2 * i + 0));
+    }
   }
-  return EOK;
+  return eno;
 }
 
 errno_t rsx_oneshot_sync_write_byte (
@@ -618,9 +662,11 @@ errno_t rsx_set_goal_positions(  //
 errno_t rsx_check_connection(rsx* rsx, hr_serial* hrs, uint8_t id) {
   /* check id */
   uint8_t rid;
-  ECALL(rsx_oneshot_read_byte(rsx, hrs, id, 0x04, &rid));
-  if (id == rid) {
-    return EOK;
+  errno_t eno = rsx_oneshot_read_byte(rsx, hrs, id, 0x04, &rid);
+  if (eno == EOK) {
+    if (id == rid) {
+      return EOK;
+    }
   }
   return -1;
 }
@@ -660,4 +706,37 @@ errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate) {
   uint8_t rep;
   ECALL(rsx_oneshot_read_byte(rsx, hrs, id, 0x06, &rep));
   return baudrate_to_int(rep, baudrate);
+}
+
+/* utility commands */
+errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, hrs);
+  EVALUE(NULL, baudrate);
+  EVALUE(NULL, id);
+
+  printf("===== searching servo =====\n");
+  for (int i = 0; i < sizeof(kAvailableBaudrates)/sizeof(kAvailableBaudrates[0]); i++) {
+    printf("== %2d baudrate:%d", i, kAvailableBaudrates[i]);
+    errno_t eno = hr_serial_set_baudrate(hrs, kAvailableBaudrates[i]);
+    if (eno != EOK) {
+      printf(" -- skip\n");
+      continue;
+    }
+    printf("\n");
+
+    // for (uint8_t r_id = 0; r_id < 127; r_id++) {
+    for (uint8_t r_id = 0; r_id < 3; r_id++) {
+      printf(" %02x", r_id); fflush(stdout);
+      eno = rsx_check_connection(rsx, hrs, r_id);
+      if (eno == EOK) {
+        printf("Found : baudrate:%d id:%0x\n", kAvailableBaudrates[i], r_id);
+        *baudrate = kAvailableBaudrates[i];
+        *id       = r_id;
+        return EOK;
+      }
+    }
+    printf("\n");
+  }
+  return EOK;
 }

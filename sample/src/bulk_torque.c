@@ -65,11 +65,14 @@ int main(int argc, char *argv[]) {
   ECALL(hr_serial_init(&hrs));
   ECALL(hr_serial_set_baudrate(&hrs, 230400));
 
+  char* dev  = "ttyUSB";
+  char* unit = "0";
   if (argc >= 3) {
-    ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
-  } else {
-    ECALL(hr_serial_open(&hrs, "ttyUSB", "1"));
+    dev  = argv[1];
+    unit = argv[2];
   }
+  printf("open %s %s\n", dev, unit);
+  ECALL(hr_serial_open(&hrs, dev, unit));
 
   run_app(argc, argv, &hrs);
 

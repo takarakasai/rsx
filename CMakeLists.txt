@@ -8,6 +8,7 @@ option(HR_SERIAL_AUTO_READ_ECHO_DATA "" OFF)
 if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
     add_definitions(-DHR_SERIAL_AUTO_READ_ECHO_DATA)
 endif()
+#add_definitions(-DRSX_DEBUG_PRINT_ENABLE)
 
 include_directories(${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME})
 
