@@ -39,6 +39,11 @@
 #define RSX_FLAG_RETURN_60TO127  (0x0D)
 #define RSX_FLAG_RETURN_USER     (0x0F)
 
+#define RSX_MAX_ID (0x7F)
+#define RSX_MAX_NUM_OF_DEVICES (RSX_MAX_ID + 1)
+
+#define RSX_NUM_OF_BAUDRATES (9)
+
 /*
  * @length  max length of data payload
  * @count   max num of servo

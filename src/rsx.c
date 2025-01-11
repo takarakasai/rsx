@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-static const int kAvailableBaudrates[] = {
+static const int kAvailableBaudrates[RSX_NUM_OF_BAUDRATES] = {
   9600,
   14400,
   19200,
@@ -713,14 +713,13 @@ errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate) {
 }
 
 /* utility commands */
-errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
+errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, rsx_device_info* info) {
   EVALUE(NULL, rsx);
   EVALUE(NULL, hrs);
-  EVALUE(NULL, baudrate);
-  EVALUE(NULL, id);
+  EVALUE(NULL, info);
 
   printf("===== searching servo =====\n");
-  size_t count = 0;
+  size_t total_count = 0;
   for (int i = 0; i < sizeof(kAvailableBaudrates)/sizeof(kAvailableBaudrates[0]); i++) {
     printf("== %2d baudrate:%d", i, kAvailableBaudrates[i]);
     errno_t eno = hr_serial_set_baudrate(hrs, kAvailableBaudrates[i]);
@@ -731,21 +730,27 @@ errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
     printf("\n");
 
     printf(" --");
+    info->group[i].num_of_devices = 0;
     for (uint8_t r_id = 0; r_id < 127; r_id++) {
-      // printf("\r %02x", r_id); fflush(stdout);
+      printf("\r %5.1f%% :", 100.0 * r_id / 126);
+      for (ssize_t j = 0; j < info->group[i].num_of_devices; j++) {
+        printf(" %02x", info->group[i].ids[j]);
+      }
+      fflush(stdout);
+
       eno = rsx_check_connection(rsx, hrs, r_id);
       if (eno == EOK) {
         printf(" %0x", r_id);
         fflush(stdout);
-        if (count++ == 0) {
-          *baudrate = kAvailableBaudrates[i];
-          *id = r_id;
-        }
+        info->group[i].baudrate = kAvailableBaudrates[i];
+        info->group[i].ids[info->group[i].num_of_devices] = r_id;
+        info->group[i].num_of_devices++;
+        total_count++;
       }
     }
     printf("\n");
   }
-  if (count == 0) {
+  if (total_count == 0) {
     return -1;
   }
   return EOK;

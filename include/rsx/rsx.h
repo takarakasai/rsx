@@ -47,6 +47,16 @@ typedef struct {
   rsx_pkt pkt;
 } rsx;
 
+typedef struct {
+  int baudrate;
+  ssize_t num_of_devices;
+  uint8_t ids[RSX_MAX_NUM_OF_DEVICES];
+} rsx_device_group;
+
+typedef struct {
+  rsx_device_group group[RSX_NUM_OF_BAUDRATES];
+} rsx_device_info;
+
 errno_t rsx_config_init(rsx_config* config);
 errno_t rsx_config_copy(rsx_config* from, rsx_config* to);
 
@@ -179,6 +189,6 @@ errno_t rsx_set_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int baudrate);
 errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate);
 
 /* utility commands */
-errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* bandrate, uint8_t* id);
+errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, rsx_device_info* info);
 
 #endif
