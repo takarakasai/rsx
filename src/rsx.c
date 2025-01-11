@@ -184,60 +184,66 @@ errno_t rsx_bulk_write_impl (rsx* rsx, hr_serial* hrs) {
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
   ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
 
-  usleep(1000);
+  // usleep(1000);
 
   return EOK;
 }
 
 errno_t rsx_oneshot_read_impl (
+    rsx* rsx, hr_serial* hrs) {
+  EVALUE(NULL, rsx);
+
+  const size_t kTimeout = 0;
+  errno_t eno  = -1;
+  size_t count = 0;
+  do {
+    usleep(500);
+    eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
+    if (eno == EOK) {
+      // ECALL(data_dump(rsx->rbuff, rsx->read_size));
+      size_t pkt_size;
+      eno = rsx_pkt_deser(&(rsx->pkt), rsx->rbuff, rsx->max_frame_size, &pkt_size);
+      assert(rsx->read_size == pkt_size);
+      if (eno == EOK) {
+        printf("OK : %zd\n", count);
+        break;
+      }
+    }
+  } while(count++ < 100);
+
+  if (eno != EOK && count >= kTimeout) {
+    return ETIMEDOUT;
+  }
+
+  return EOK;
+}
+
+errno_t rsx_oneshot_sync_read_impl (
     rsx* rsx, hr_serial* hrs, ssize_t payload_size) {
   EVALUE(NULL, rsx);
 
   size_t pkt_size;
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
 
-  const size_t kTimeout = 1000;
+  const size_t kTimeout = 0;
   size_t count = 0;
   rsx->read_size = pkt_size + payload_size;
+  errno_t eno = -1;
   do {
-    errno_t eno = -1;
     // ECALL(data_dump(rsx->wbuff, pkt_size));
-    // printf(" "); fflush(stdout);
     ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
-    // printf("-"); fflush(stdout);
-    // usleep(1 * 1000);
-    // usleep(1 * 1000);
 
-    // RSX_SPKT_SETFLAG(rsx->pkt, addr);
-
-      size_t cnt = 0;
-      do {
-        // usleep(10 * 1000);
-        usleep(500);
-        eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
-        // printf("="); fflush(stdout);
-        if (eno == EOK) {
-          // ECALL(data_dump(rsx->rbuff, rsx->read_size));
-          eno = rsx_pkt_deser(&(rsx->pkt), rsx->rbuff, rsx->max_frame_size, &pkt_size);
-          if (eno == EOK) {
-            printf("OK : %zd:%zd\n", count, cnt);
-            goto AAA;
-            assert(0);
-            break;
-          }
-        } else {
-          // printf("recv size: %zd\n", ); fflush(stdout);
-        }
-      } while(cnt++ > 100);
+    eno = rsx_oneshot_read_impl(rsx, hrs);
+    if (eno == EOK) {
+      break;
+    }
   } while (count++ < kTimeout);
 
   if (count >= 2) {
     printf("-==>%zd\n\n\n\n", count);
   }
 
-AAA:
-
-  if (count >= kTimeout) {
+  if (eno != EOK && count >= kTimeout) {
     return ETIMEDOUT;
   }
 
@@ -373,7 +379,7 @@ errno_t rsx_oneshot_read_bytes_impl (
   RSX_SPKT_SETADDR(rsx->pkt, addr);
   RSX_SPKT_SETLENGTH(rsx->pkt, size /* Byte */);
 
-  errno_t eno = rsx_oneshot_read_impl(rsx, hrs, size /* Byte */);
+  errno_t eno = rsx_oneshot_sync_read_impl(rsx, hrs, size /* Byte */);
 
   return eno;
 }
@@ -388,7 +394,7 @@ errno_t rsx_oneshot_read_words_impl (
   RSX_SPKT_SETADDR(rsx->pkt, addr);
   RSX_SPKT_SETLENGTH(rsx->pkt, 2 * words /* Byte */);
 
-  errno_t eno = rsx_oneshot_read_impl(rsx, hrs, 2 * words /* Byte */);
+  errno_t eno = rsx_oneshot_sync_read_impl(rsx, hrs, 2 * words /* Byte */);
 
   return eno;
 }

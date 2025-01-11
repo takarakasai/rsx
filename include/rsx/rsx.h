@@ -79,7 +79,8 @@ inline int16_t rsx_spkt_get_i16(rsx* rsx) {
 }
 
 errno_t rsx_bulk_write_impl (rsx* rsx, hr_serial* hrs);
-errno_t rsx_oneshot_read_impl (
+errno_t rsx_oneshot_read_impl (rsx* rsx, hr_serial* hrs);
+errno_t rsx_oneshot_sync_read_impl (
     rsx* rsx, hr_serial* hrs, ssize_t payload_size);
 errno_t rsx_oneshot_sync_write_impl (
     rsx* rsx, hr_serial* hrs, ssize_t payload_size);

@@ -190,28 +190,24 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   /*       ^                    |                  */
   /*       +--------------------+                  */
 
-#if 0
-  static size_t offset = 0;
-  static uint8_t buff[1024] = {0x00};
-  size_t rsize;
-  ECALL(_read(ser->fd, buff + offset, 1024 - offset, &rsize));
-  offset += rsize;
-#endif
-
   state = kSearchDeliminator;
   size_t packet_size  = 0;
   // size_t read_size    = 0;
   static size_t read_size   = 0;
   static uint8_t buff[1024] = {0x00};
   size_t zcount       = 0;
-  RSX_DEBUG_PRINT("Start=============================\n");
+  RSX_DEBUG_PRINT2("Start============================= %zd\n", read_size);
+  for (size_t i = 0; i < read_size; i++) {
+    printf(" %02x", buff[i]);
+  }
+  printf("\n");
   do {
     RSX_DEBUG_PRINT2("state %d %zd\n", state, read_size);
     size_t siz = -1;
     if (state == kSearchDeliminator || state == kReadHeader) {
       if (read_size < 6) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Dlim : %zd --> %zd\n", 6 - read_size, siz);
+        RSX_DEBUG_PRINT2(" Dlim : %zd --> %zd\n", read_size, siz);
         read_size += siz;
       }
       // assert(read_size < 6);
@@ -220,7 +216,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
     } else if (state == kSkipPacket) {
       if (read_size < packet_size) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Skip : %zd --> %zd\n", packet_size - read_size, siz);
+        RSX_DEBUG_PRINT2(" Skip : pkt:%zd size:%zd --> %zd\n", packet_size, read_size, siz);
         read_size += siz;
       }
       // assert(read_size < packet_size);
@@ -229,7 +225,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
     } else {
       if (read_size < size) {
         ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT2(" Other : %zd --> %zd\n", size - read_size, siz);
+        RSX_DEBUG_PRINT2(" Other : %zd --> %zd\n", read_size, siz);
         read_size += siz;
       }
       // assert(read_size < size);
@@ -247,7 +243,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
             memmove(buff, buff + i, read_size - i);
             read_size -= i;
             state = kReadHeader;
-            // break;
+            /* do not skip to get latest packet */
           }
         }
         if (state == kSearchDeliminator) {
@@ -256,12 +252,12 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
       }
     }
     if (state == kReadHeader) {
-      if (read_size >= 5) {
+      if (read_size >= 6) {
         uint8_t len = ((uint8_t*)buff)[5];
         // FIXME(takara.kasai@gmail.com) : 8 to be changed to RSX_PKT_SIZE_MIN
         packet_size = len + 8;
-        RSX_DEBUG_PRINT2("read header %zd > %zd (%02x + 0x08)\n", size, packet_size, len);
-        for (int i = 0; i < 5; i++) {
+        RSX_DEBUG_PRINT("read header %zd > %zd (%02x + 0x08)\n", size, packet_size, len);
+        for (int i = 0; i < 6; i++) {
           printf(" %02x", ((uint8_t*)buff)[i]);
         }
         printf("\n");
@@ -276,8 +272,9 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
       if (read_size >= packet_size) {
         RSX_DEBUG_PRINT2("skip packet %zd > %zd\n", read_size, packet_size);
         state = kSearchDeliminator;
+        memmove(buff, buff + packet_size, read_size - packet_size);
         read_size = 0;
-        packet_size = 0;
+        packet_size -= packet_size;
       }
     }
     if (state == kReadBody) {
@@ -289,17 +286,18 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
         for (size_t i = 0; i < size; i++) {
           printf(" %02x", ((uint8_t*)data)[i]);
         }
+        printf("\n");
         break;
       }
     }
 
     if (siz == 0) {
       zcount++;
-      usleep(100);
-      if (zcount > 10) {
+      // usleep(100);
+      if (zcount > 0) {
         printf("======================== exit : size:%zd expect:%zd state:%d\n", read_size, size, state);
         for (size_t i = 0; i < read_size; i++) {
-          printf(" %02x", ((uint8_t*)data)[i]);
+          printf(" %02x", ((uint8_t*)buff)[i]);
         }
         printf("\n");
         // assert(false);

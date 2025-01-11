@@ -71,55 +71,46 @@ errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t n
 
   static int read_count = 0;
 
-  errno_t eno = EOK;
+  errno_t eno[num];
   uint16_t data[num][4];
   for (size_t i = 0; i < num; i++) {
-    errno_t eno1 = rsx_oneshot_read_words(rsx, hrs, id[i], 0x2A,
+    eno[i] = rsx_oneshot_read_words(rsx, hrs, id[i], 0x2A,
                       sizeof(data[i])/sizeof(data[i][0]), data[i]);
-    break;
-    if (eno1 != EOK) {
-      eno = eno1;
-      break;
-    }
   }
 
   // printf("\033[5B");
 
-  if (eno == EOK) {
-    printf("ID:");
-    for (size_t i = 0; i < num; i++) {
-      printf(" %02x", id[i]);
-    }
-    printf("Count : %d\n", read_count++);
-
-    printf("Current Pos  :");
-    for (size_t i = 0; i < num; i++) {
-      printf(" %+7.2lf (0x%04x)", (int16_t)(data[i][0]) / 10.0f, data[i][0]);
-    }
-    printf(" [deg]\n");
-
-    printf("Current Time :");
-    for (size_t i = 0; i < num; i++) {
-      printf(" %+7d (0x%04x)", data[i][1] * 10, data[i][1]);
-    }
-    printf(" [msec]\n");
-
-    printf("Current Vel  :");
-    for (size_t i = 0; i < num; i++) {
-      printf(" %+7d (0x%04x)", (int16_t)(data[i][2]), data[i][2]);
-    }
-    printf(" [rpm]\n");
-
-    printf("Current Trq  :");
-    for (size_t i = 0; i < num; i++) {
-      printf(" %+7.2lf (0x%04x)", data[i][3] * 0.1, data[i][3]);
-    }
-    printf(" [%%]\n");
-
-    // printf("\033[5A");
-  } else {
-    printf("Get status error\n");
+  printf("ID(err):");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %02x(%4d)", id[i], eno[i]);
   }
+  printf("Count : %d\n", read_count++);
+
+  printf("Current Pos  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7.2lf (0x%04x)", (int16_t)(data[i][0]) / 10.0f, data[i][0]);
+  }
+  printf(" [deg]\n");
+
+  printf("Current Time :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7d (0x%04x)", data[i][1] * 10, data[i][1]);
+  }
+  printf(" [msec]\n");
+
+  printf("Current Vel  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7d (0x%04x)", (int16_t)(data[i][2]), data[i][2]);
+  }
+  printf(" [rpm]\n");
+
+  printf("Current Trq  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7.2lf (0x%04x)", data[i][3] * 0.1, data[i][3]);
+  }
+  printf(" [%%]\n");
+
+  // printf("\033[5A");
 
   return EOK;
 }
