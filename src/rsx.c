@@ -198,7 +198,7 @@ errno_t rsx_oneshot_read_impl (
   errno_t eno  = -1;
   size_t count = 0;
   do {
-    usleep(500);
+    usleep(100);
     eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
     if (eno == EOK) {
       // ECALL(data_dump(rsx->rbuff, rsx->read_size));
@@ -209,7 +209,7 @@ errno_t rsx_oneshot_read_impl (
         break;
       }
     }
-  } while(count++ < 100);
+  } while(count++ < 200);
   rsx->retry_count = count;
 
   if (eno != EOK && count >= kTimeout) {
@@ -720,6 +720,7 @@ errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
   EVALUE(NULL, id);
 
   printf("===== searching servo =====\n");
+  size_t count = 0;
   for (int i = 0; i < sizeof(kAvailableBaudrates)/sizeof(kAvailableBaudrates[0]); i++) {
     printf("== %2d baudrate:%d", i, kAvailableBaudrates[i]);
     errno_t eno = hr_serial_set_baudrate(hrs, kAvailableBaudrates[i]);
@@ -729,17 +730,23 @@ errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, int* baudrate, uint8_t* id) {
     }
     printf("\n");
 
+    printf(" --");
     for (uint8_t r_id = 0; r_id < 127; r_id++) {
-      printf(" %02x", r_id); fflush(stdout);
+      // printf("\r %02x", r_id); fflush(stdout);
       eno = rsx_check_connection(rsx, hrs, r_id);
       if (eno == EOK) {
-        printf("Found : baudrate:%d id:%0x\n", kAvailableBaudrates[i], r_id);
-        *baudrate = kAvailableBaudrates[i];
-        *id       = r_id;
-        return EOK;
+        printf(" %0x", r_id);
+        fflush(stdout);
+        if (count++ == 0) {
+          *baudrate = kAvailableBaudrates[i];
+          *id = r_id;
+        }
       }
     }
     printf("\n");
+  }
+  if (count == 0) {
+    return -1;
   }
   return EOK;
 }
