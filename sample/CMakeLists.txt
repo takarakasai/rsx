@@ -9,6 +9,10 @@ set(SRCS
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_torque.c"
   "${PROJECT_SOURCE_DIR}/sample/src/bulk_position.c"
   "${PROJECT_SOURCE_DIR}/sample/src/bulk_torque.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/read_current_status.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/oneshot_reboot.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/oneshot_check_connection.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/oneshot_change_baudrate.c"
 )
 
 set(COMMON_SRCS

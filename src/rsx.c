@@ -2,6 +2,63 @@
 
 #include <stdlib.h>
 
+static errno_t int_to_baudrate(int from, uint8_t* to) {
+  EVALUE(NULL, to);
+
+  switch (from) {
+    case   9600: *to = 0x00; break;
+#if defined(B28800)
+    case  14400: *to = 0x01; break;
+#endif
+    case  19200: *to = 0x02; break;
+#if defined(B28800)
+    case  28800: *to = 0x03; break;
+#endif
+    case  38400: *to = 0x04; break;
+    case  57600: *to = 0x05; break;
+#if defined(B76800)
+    case  76800: *to = 0x06; break;
+#endif
+    case 115200: *to = 0x07; break;
+#if defined(B28800)
+    case 153600: *to = 0x08; break;
+#endif
+    case 230400: *to = 0x09; break;
+    default:
+      return EINVAL;
+  }
+
+  return EOK;
+}
+
+static errno_t baudrate_to_int(uint8_t from, int* to) {
+  EVALUE(NULL, to);
+
+  switch (from) {
+    case 0x00: *to = 9600; break;
+#if defined(B28800)
+    case 0x01: *to = 14400; break;
+#endif
+    case 0x02: *to = 19200; break;
+#if defined(B28800)
+    case 0x03: *to = 28800; break;
+#endif
+    case 0x04: *to = 38400; break;
+    case 0x05: *to = 57600; break;
+#if defined(B28800)
+    case 0x06: *to = 76800; break;
+#endif
+    case 0x07: *to = 115200; break;
+    case 0x08: *to = 153600; break;
+    case 0x09: *to = 230400; break;
+    default:
+      *to = -1;
+      return EINVAL;
+  }
+
+  return EOK;
+}
+
 errno_t rsx_config_init(  //
     rsx_config* config) {
   EVALUE(NULL, config);
@@ -29,6 +86,9 @@ errno_t rsx_init(  //
     rsx_config* config) {
   EVALUE(NULL, rsx);
   EVALUE(NULL, config);
+
+  rsx->write_size = 0;
+  rsx->read_size = 0;
 
   rsx->wbuff = NULL;
   rsx->rbuff = NULL;
@@ -141,11 +201,29 @@ errno_t rsx_oneshot_read_impl (
     }
   } while (count++ < 10);
 
-  assert(count < 10);
+  if (count >= 10) {
+    return ETIMEDOUT;
+  }
 
   return EOK;
 }
 
+/* w/o data check */
+errno_t rsx_oneshot_write_impl (
+    rsx* rsx, hr_serial* hrs) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, hrs);
+
+  size_t pkt_size;
+  ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
+  rsx->write_size = pkt_size;
+  // ECALL(data_dump(rsx->wbuff, pkt_size));
+  ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
+
+  return EOK;
+}
+
+/* w/ data check by the oneshot read command */
 errno_t rsx_oneshot_sync_write_impl (
     rsx* rsx, hr_serial* hrs, ssize_t payload_size) {
   EVALUE(NULL, rsx);
@@ -180,7 +258,9 @@ errno_t rsx_oneshot_sync_write_impl (
     }
   } while (count++ < 10);
 
-  assert(count < 10);
+  if (count >= 10) {
+    return ETIMEDOUT;
+  }
 
   return EOK;
 }
@@ -273,6 +353,56 @@ errno_t rsx_oneshot_read_words_impl (
   RSX_SPKT_SETLENGTH(rsx->pkt, 2 * words /* Byte */);
 
   ECALL(rsx_oneshot_read_impl(rsx, hrs, 2 * words /* Byte */));
+
+  return EOK;
+}
+
+/* this command would be disabled after saving 60k [times]. */
+errno_t rsx_oneshot_save_rom (
+    rsx* rsx, hr_serial* hrs, uint8_t id) {
+  EVALUE(NULL, rsx);
+  // FIXME(takara.kasai@gmail.com): range check for id.
+
+  // FIXME(takara.kasai@gmail.com): optimize FLAG bits.
+  ECALL(rsx_spkt_init(&(rsx->pkt), id, 0x40));
+  RSX_SPKT_SETADDR(rsx->pkt, 0xFF);
+  RSX_SPKT_SETLENGTH(rsx->pkt, 0);
+  RSX_SPKT_SETCOUNT(rsx->pkt, 0);
+
+  ECALL(rsx_oneshot_write_impl(rsx, hrs));
+
+  return EOK;
+}
+
+errno_t rsx_oneshot_reboot (
+    rsx* rsx, hr_serial* hrs, uint8_t id) {
+  EVALUE(NULL, rsx);
+  // FIXME(takara.kasai@gmail.com): range check for id.
+
+  // FIXME(takara.kasai@gmail.com): optimize FLAG bits.
+  ECALL(rsx_spkt_init(&(rsx->pkt), id, 0x20));
+  RSX_SPKT_SETADDR(rsx->pkt, 0xFF);
+  RSX_SPKT_SETLENGTH(rsx->pkt, 0);
+  RSX_SPKT_SETCOUNT(rsx->pkt, 0);
+
+  ECALL(rsx_oneshot_write_impl(rsx, hrs));
+
+  return EOK;
+}
+
+/* this command change ID to 0x01 */
+errno_t rsx_oneshot_factory_reset (
+    rsx* rsx, hr_serial* hrs, uint8_t id) {
+  EVALUE(NULL, rsx);
+  // FIXME(takara.kasai@gmail.com): range check for id.
+
+  // FIXME(takara.kasai@gmail.com): optimize FLAG bits.
+  ECALL(rsx_spkt_init(&(rsx->pkt), id, 0x10));
+  RSX_SPKT_SETADDR(rsx->pkt, 0xFF);
+  RSX_SPKT_SETLENGTH(rsx->pkt, 0xFF);
+  RSX_SPKT_SETCOUNT(rsx->pkt, 0);
+
+  ECALL(rsx_oneshot_write_impl(rsx, hrs));
 
   return EOK;
 }
@@ -482,4 +612,52 @@ errno_t rsx_set_goal_positions(  //
   }
   ECALL(rsx_bulk_write_word(rsx, hrs, 0x1e, ids, (uint16_t*)i_goals, num));
   return EOK;
+}
+
+/* command to check connection */
+errno_t rsx_check_connection(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  /* check id */
+  uint8_t rid;
+  ECALL(rsx_oneshot_read_byte(rsx, hrs, id, 0x04, &rid));
+  if (id == rid) {
+    return EOK;
+  }
+  return -1;
+}
+
+/* command w/ payload less */
+/*  -- save ROM area */
+errno_t rsx_save_rom(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  ECALL(rsx_oneshot_save_rom(rsx, hrs, id));
+  return EOK;
+}
+
+errno_t rsx_reboot(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  ECALL(rsx_oneshot_reboot(rsx, hrs, id));
+  return EOK;
+}
+
+errno_t rsx_factory_reset(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  ECALL(rsx_oneshot_factory_reset(rsx, hrs, id));
+  return EOK;
+}
+
+/* command to change ROM area */
+errno_t rsx_set_id(rsx* rsx, hr_serial* hrs, uint8_t id_from, uint8_t id_to) {
+  ECALL(rsx_oneshot_sync_write_byte(rsx, hrs, id_from, 0x04, id_to));
+  return EOK;
+}
+
+errno_t rsx_set_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int baudrate) {
+  uint8_t req;
+  ECALL(int_to_baudrate(baudrate, &req));
+  ECALL(rsx_oneshot_sync_write_byte(rsx, hrs, id, 0x06, req));
+  return EOK;
+}
+
+errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate) {
+  EVALUE(NULL, baudrate);
+  uint8_t rep;
+  ECALL(rsx_oneshot_read_byte(rsx, hrs, id, 0x06, &rep));
+  return baudrate_to_int(rep, baudrate);
 }

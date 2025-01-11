@@ -35,6 +35,7 @@ typedef struct {
   rsx_config config;
 
   ssize_t max_frame_size;
+  ssize_t write_size;  /* for debug */
   ssize_t read_size;  /* for debug */
   uint8_t* wbuff;
   uint8_t* rbuff;
@@ -156,5 +157,18 @@ errno_t rsx_set_goal_torques(  //
 errno_t rsx_set_goal_positions(  //
     rsx* rsx, hr_serial* hrs, uint8_t ids[/*num*/], float goals[/*num*/], size_t num);
 
-#endif
+/* command to check connection */
+errno_t rsx_check_connection(rsx* rsx, hr_serial* hrs, uint8_t id);
+ 
+/* command w/ payload less */
+/*  -- save ROM area */
+errno_t rsx_save_rom(rsx* rsx, hr_serial* hrs, uint8_t id);
+errno_t rsx_reboot(rsx* rsx, hr_serial* hrs, uint8_t id);
+errno_t rsx_factory_reset(rsx* rsx, hr_serial* hrs, uint8_t id);
 
+/* command to change ROM area */
+errno_t rsx_set_id(rsx* rsx, hr_serial* hrs, uint8_t id_from, uint8_t id_to);
+errno_t rsx_set_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int baudrate);
+errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate);
+
+#endif

@@ -1,5 +1,24 @@
 #include "util.h"
 
+errno_t dump (rsx* rsx) {
+  EVALUE(NULL, rsx);
+
+  printf("wbuff:size:%04zd ::", rsx->write_size);
+  for (size_t i = 0; i < rsx->write_size; i++) {
+    printf(" %02x", rsx->wbuff[i]);
+  }
+  printf("\n");
+
+  printf("rbuff:size:%04zd ::", rsx->read_size);
+  for (size_t i = 0; i < rsx->read_size; i++) {
+    printf(" %02x", rsx->rbuff[i]);
+  }
+  printf("\n");
+
+
+  return EOK;
+}
+
 errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t num) {
   EVALUE(NULL, rsx);
   EVALUE(NULL, hrs);

@@ -11,6 +11,9 @@
 
 #include <stdbool.h>
 
+/* for usleep */
+#include <unistd.h>
+
 #include "rsx_err.h"
 #include "rsx_common.h"
 
@@ -67,12 +70,52 @@ static errno_t setattr (int fd, struct termios *term) {
   return EOK;
 }
 
+/* speed [bps] */
+static errno_t convert_speed(int from, speed_t* to) {
+  EVALUE(0, to);
+
+  switch (from) {
+    case   9600: *to =   B9600; break;
+#if defined(B28800)
+    case  14400: *to =  B14400; break;
+#endif
+    case  19200: *to =  B19200; break;
+#if defined(B28800)
+    case  28800: *to =  B28800; break;
+#endif
+    case  38400: *to =  B38400; break;
+    case  57600: *to =  B57600; break;
+#if defined(B76800)
+    case  76800: *to =  B76800; break;
+#endif
+    case 115200: *to = B115200; break;
+#if defined(B28800)
+    case 153600: *to = B153600; break;
+#endif
+    case 230400: *to = B230400; break;
+    default:
+      return EINVAL;
+  }
+
+  return EOK;
+}
+
 errno_t hr_serial_init (hr_serial *ser) {
   EVALUE(NULL, ser);
 
   ser->fd = 0;
+  ser->baudrate = B115200;
+
   memset(&(ser->prev_term), 0, sizeof(struct termios));
   memset(&(ser->term), 0, sizeof(struct termios));
+
+  return EOK;
+}
+
+errno_t hr_serial_set_baudrate(hr_serial *ser, int baudrate) {
+  EVALUE(NULL, ser);
+
+  ECALL(convert_speed(baudrate, &(ser->baudrate)));
 
   return EOK;
 }
@@ -99,7 +142,7 @@ errno_t hr_serial_open (hr_serial *ser, const char* dev, const char* unit) {
 
   tcgetattr(ser->fd, &(ser->prev_term)); /* 現在のポート設定を待避 */
   ECALL(setraw(&(ser->term)));
-  ECALL(setspeed(&(ser->term), B115200));
+  ECALL(setspeed(&(ser->term), ser->baudrate));
   ECALL(setattr(ser->fd, &(ser->term)));
 
   return EOK;

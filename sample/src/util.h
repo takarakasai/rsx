@@ -4,6 +4,8 @@
 // #define DATA_DUMP
 #include "rsx.h"
 
+errno_t dump (rsx* rsx);
+
 errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t num);
 errno_t get_current_status (rsx* rsx, hr_serial* hrs, uint8_t id);
 
