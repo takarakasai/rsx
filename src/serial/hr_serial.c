@@ -109,6 +109,8 @@ errno_t hr_serial_init (hr_serial *ser) {
   memset(&(ser->prev_term), 0, sizeof(struct termios));
   memset(&(ser->term), 0, sizeof(struct termios));
 
+  ser->offset = 0;
+
   return EOK;
 }
 
@@ -189,55 +191,52 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
   /*       ^                    |                  */
   /*       +--------------------+                  */
 
-  static size_t read_size   = 0;
-  static uint8_t buff[1024] = {0x00};
-
   size_t packet_size  = 0;
   size_t zcount       = 0;
-  RSX_DEBUG_PRINT("Start============================= %zd\n", read_size);
+  RSX_DEBUG_PRINT("Start============================= %zd\n", ser->offset);
   do {
-    RSX_DEBUG_PRINT("state %d %zd\n", state, read_size);
+    RSX_DEBUG_PRINT("state %d %zd\n", state, ser->offset);
     size_t siz = -1;
     if (state == kSearchDeliminator || state == kReadHeader) {
-      if (read_size < 6) {
-        ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT(" Dlim : %zd --> %zd\n", read_size, siz);
-        read_size += siz;
+      if (ser->offset < 6) {
+        ECALL(_read(ser->fd, ser->buff + ser->offset, 1024 - ser->offset, &siz));
+        RSX_DEBUG_PRINT(" Dlim : %zd --> %zd\n", ser->offset, siz);
+        ser->offset += siz;
       }
     } else if (state == kSkipPacket) {
-      if (read_size < packet_size) {
-        ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT(" Skip : pkt:%zd size:%zd --> %zd\n", packet_size, read_size, siz);
-        read_size += siz;
+      if (ser->offset < packet_size) {
+        ECALL(_read(ser->fd, ser->buff + ser->offset, 1024 - ser->offset, &siz));
+        RSX_DEBUG_PRINT(" Skip : pkt:%zd size:%zd --> %zd\n", packet_size, ser->offset, siz);
+        ser->offset += siz;
       }
     } else {
-      if (read_size < size) {
-        ECALL(_read(ser->fd, buff + read_size, 1024 - read_size, &siz));
-        RSX_DEBUG_PRINT(" Other : %zd --> %zd\n", read_size, siz);
-        read_size += siz;
+      if (ser->offset < size) {
+        ECALL(_read(ser->fd, ser->buff + ser->offset, 1024 - ser->offset, &siz));
+        RSX_DEBUG_PRINT(" Other : %zd --> %zd\n", ser->offset, siz);
+        ser->offset += siz;
       }
     }
 
     if (state == kSearchDeliminator) {
-      if (read_size >= 2) {
-        for (size_t i = 0; i < read_size - 1; i++) {
-          if ((((uint8_t*)buff)[i]     == 0xFD) &&
-              (((uint8_t*)buff)[i + 1] == 0xDF)) {
+      if (ser->offset >= 2) {
+        for (size_t i = 0; i < ser->offset - 1; i++) {
+          if ((((uint8_t*)ser->buff)[i]     == 0xFD) &&
+              (((uint8_t*)ser->buff)[i + 1] == 0xDF)) {
             RSX_DEBUG_PRINT("%s : skip %ld [B]\n", __func__, i);
-            memmove(buff, buff + i, read_size - i);
-            read_size -= i;
+            memmove(ser->buff, ser->buff + i, ser->offset - i);
+            ser->offset -= i;
             state = kReadHeader;
             /* do not skip to get latest packet */
           }
         }
         if (state == kSearchDeliminator) {
-          read_size = 0;
+          ser->offset = 0;
         }
       }
     }
     if (state == kReadHeader) {
-      if (read_size >= 6) {
-        uint8_t len = ((uint8_t*)buff)[5];
+      if (ser->offset >= 6) {
+        uint8_t len = ((uint8_t*)ser->buff)[5];
         // FIXME(takara.kasai@gmail.com) : 8 to be changed to RSX_PKT_SIZE_MIN
         packet_size = len + 8;
         RSX_DEBUG_PRINT("read header %zd > %zd (%02x + 0x08)\n", size, packet_size, len);
@@ -249,19 +248,19 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
       }
     }
     if (state == kSkipPacket) {
-      if (read_size >= packet_size) {
-        RSX_DEBUG_PRINT("skip packet %zd > %zd\n", read_size, packet_size);
+      if (ser->offset >= packet_size) {
+        RSX_DEBUG_PRINT("skip packet %zd > %zd\n", ser->offset, packet_size);
         state = kSearchDeliminator;
-        memmove(buff, buff + packet_size, read_size - packet_size);
-        read_size = 0;
-        packet_size -= packet_size;
+        memmove(ser->buff, ser->buff + packet_size, ser->offset - packet_size);
+        ser->offset = 0;
+        packet_size = 0;
       }
     }
     if (state == kReadBody) {
-      if (read_size >= size) {
-        memcpy(data, buff, size);
-        memmove(buff, buff + size, read_size - size);
-        read_size -= size;
+      if (ser->offset >= size) {
+        memcpy(data, ser->buff, size);
+        memmove(ser->buff, ser->buff + size, ser->offset - size);
+        ser->offset -= size;
         break;
       }
     }

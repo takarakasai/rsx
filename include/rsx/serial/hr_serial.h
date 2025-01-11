@@ -11,6 +11,9 @@ typedef struct {
   speed_t baudrate;
   struct termios prev_term;
   struct termios term;
+
+  size_t offset;
+  uint8_t buff[1024];
 } hr_serial;
 
 errno_t hr_serial_init (hr_serial *ser);
