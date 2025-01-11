@@ -21,50 +21,6 @@ errno_t dump (rsx* rsx) {
   return EOK;
 }
 
-#if 0
-errno_t search_servo (rsx* rsx, hr_serial* hrs, uint8_t* id) {
-  EVALUE(NULL, rsx);
-  EVALUE(NULL, hrs);
-  EVALUE(NULL, id);
-
-  int baudrates[] = {
-    9600,
-    14400,
-    19200,
-    28800,
-    38400,
-    57600,
-    115200,
-    153600,
-    230400
-  };
-
-  printf("===== searching servo =====\n");
-  for (int i = 0; i < sizeof(baudrates)/sizeof(baudrates[0]); i++) {
-    printf("== %2d baudrate:%d", i, baudrates[i]);
-    errno_t eno = hr_serial_set_baudrate(hrs, baudrates[i]);
-    if (eno != EOK) {
-      printf(" -- skip\n");
-      continue;
-    }
-    printf("\n");
-
-    for (uint8_t r_id = 0; r_id < 32; r_id++) {
-      printf(" %02x", r_id); fflush(stdout);
-      eno = rsx_check_connection(rsx, hrs, r_id);
-      if (eno == EOK) {
-        printf("Found : id:%0x\n", r_id);
-        *id   = r_id;
-        return EOK;
-      }
-    }
-    printf("\n");
-  }
-
-  return -1;
-}
-#endif
-
 errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t num) {
   EVALUE(NULL, rsx);
   EVALUE(NULL, hrs);
