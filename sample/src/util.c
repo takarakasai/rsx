@@ -71,18 +71,20 @@ errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t n
 
   static int read_count = 0;
 
+  ssize_t retry_count[num];
   errno_t eno[num];
   uint16_t data[num][4];
   for (size_t i = 0; i < num; i++) {
     eno[i] = rsx_oneshot_read_words(rsx, hrs, id[i], 0x2A,
                       sizeof(data[i])/sizeof(data[i][0]), data[i]);
+    retry_count[i] = rsx_get_retry_count(rsx);
   }
 
   // printf("\033[5B");
 
-  printf("ID(err):");
+  printf("ID(err,retry):");
   for (size_t i = 0; i < num; i++) {
-    printf(" %02x(%4d)", id[i], eno[i]);
+    printf(" %02x(%4d,%3ld)", id[i], eno[i], retry_count[i]);
   }
   printf("Count : %d\n", read_count++);
 

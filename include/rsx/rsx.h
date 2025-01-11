@@ -37,6 +37,7 @@ typedef struct {
   ssize_t max_frame_size;
   ssize_t write_size;  /* for debug */
   ssize_t read_size;  /* for debug */
+  ssize_t retry_count;
   uint8_t* wbuff;
   uint8_t* rbuff;
 
@@ -51,6 +52,11 @@ errno_t rsx_config_copy(rsx_config* from, rsx_config* to);
 
 errno_t rsx_init(rsx* rsx, rsx_config* config);
 errno_t rsx_destroy(rsx* rsx);
+
+inline ssize_t rsx_get_retry_count(rsx* rsx) {
+  assert(rsx);
+  return rsx->retry_count;
+}
 
 inline uint8_t rsx_spkt_get_u8(rsx* rsx) {
   assert(rsx);

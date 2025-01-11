@@ -102,6 +102,7 @@ errno_t rsx_init(  //
 
   rsx->write_size = 0;
   rsx->read_size = 0;
+  rsx->retry_count = 0;
 
   rsx->wbuff = NULL;
   rsx->rbuff = NULL;
@@ -205,11 +206,11 @@ errno_t rsx_oneshot_read_impl (
       eno = rsx_pkt_deser(&(rsx->pkt), rsx->rbuff, rsx->max_frame_size, &pkt_size);
       assert(rsx->read_size == pkt_size);
       if (eno == EOK) {
-        printf("OK : %zd\n", count);
         break;
       }
     }
   } while(count++ < 100);
+  rsx->retry_count = count;
 
   if (eno != EOK && count >= kTimeout) {
     return ETIMEDOUT;
@@ -238,10 +239,6 @@ errno_t rsx_oneshot_sync_read_impl (
       break;
     }
   } while (count++ < kTimeout);
-
-  if (count >= 2) {
-    printf("-==>%zd\n\n\n\n", count);
-  }
 
   if (eno != EOK && count >= kTimeout) {
     return ETIMEDOUT;
@@ -299,6 +296,7 @@ errno_t rsx_oneshot_sync_write_impl (
       }
     }
   } while (count++ < 10);
+  rsx->retry_count = count;
 
   if (count >= 10) {
     return ETIMEDOUT;
