@@ -113,6 +113,8 @@ errno_t rsx_init(  //
 
   if (config) {
     ECALL(rsx_config_copy(config, &rsx->config));
+  } else {
+    ECALL(rsx_config_init(&rsx->config));
   }
 
   // <------------ max_frame_size ----------------------->
