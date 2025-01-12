@@ -68,7 +68,7 @@ errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t n
   }
   printf(" [%%]\n");
 
-  // printf("\033[5A");
+  printf("\033[5A");
 
   return EOK;
 }
