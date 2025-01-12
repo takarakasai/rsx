@@ -10,8 +10,8 @@
 #include <assert.h>
 
 // for hr_serial
-#include <rsx_io.h>
-#include <rsx_raw.h>
+#include <rsx/rsx_io.h>
+#include <rsx/rsx_raw.h>
 
 typedef enum {
   RSX_POS_CONTROL = 0x00,

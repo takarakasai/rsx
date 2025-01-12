@@ -1,4 +1,4 @@
-#include "rsx.h"
+#include "rsx/rsx.h"
 
 #include <stdlib.h>
 

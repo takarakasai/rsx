@@ -4,9 +4,9 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx.h"
-
 #include <stdbool.h>
+
+#include "rsx/rsx.h"
 
 #include "util.h"
 

@@ -2,7 +2,7 @@
 #ifndef HR_UNIXIO_H
 #define HR_UNIXIO_H
 
-#include "rsx_type.h"
+#include "rsx/rsx_type.h"
 
 errno_t _open (const char *path, int *fd);
 errno_t _close (int fd);

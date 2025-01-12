@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 // #define DATA_DUMP
-#include "rsx.h"
+#include "rsx/rsx.h"
 
 #include <stdbool.h>
 

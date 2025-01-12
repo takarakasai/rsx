@@ -1,4 +1,4 @@
-#include "rsx_raw.h"
+#include "rsx/rsx_raw.h"
 
 /* for error print */
 #include <stdio.h>
@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include <rsx_common.h>
+#include "rsx/rsx_common.h"
 
 errno_t rsx_pkt_get_size (const rsx_pkt *pkt, size_t *size) {
   EVALUE(NULL, pkt);

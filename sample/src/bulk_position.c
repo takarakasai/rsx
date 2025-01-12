@@ -4,10 +4,10 @@
 /* for usleep */
 #include <unistd.h>
 
-// #define DATA_DUMP
-#include "rsx.h"
-
 #include <stdbool.h>
+
+// #define DATA_DUMP
+#include "rsx/rsx.h"
 
 #include "util.h"
 

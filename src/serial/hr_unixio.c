@@ -1,7 +1,6 @@
+#include "rsx/serial/hr_unixio.h"
 
-#include "serial/hr_unixio.h"
-
-#include "rsx_err.h"
+#include "rsx/rsx_err.h"
 
 #include <assert.h>
 
@@ -16,7 +15,7 @@
 /* for close */
 #include <unistd.h>
 
-#include "rsx_common.h"
+#include "rsx/rsx_common.h"
 
 errno_t _open (const char *path, int *fd) {
   EVALUE(NULL, path);

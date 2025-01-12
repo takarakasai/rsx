@@ -2,7 +2,7 @@
 #define UTIL_H_
 
 // #define DATA_DUMP
-#include "rsx.h"
+#include "rsx/rsx.h"
 
 errno_t dump (rsx* rsx);
 

@@ -1,5 +1,4 @@
-
-#include "serial/hr_serial.h"
+#include "rsx/serial/hr_serial.h"
 
 #include <assert.h>
 
@@ -14,8 +13,8 @@
 /* for usleep */
 #include <unistd.h>
 
-#include "rsx_err.h"
-#include "rsx_common.h"
+#include "rsx/rsx_err.h"
+#include "rsx/rsx_common.h"
 
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);

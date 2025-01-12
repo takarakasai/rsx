@@ -27,7 +27,7 @@ foreach(src ${SRCS})
 
   add_executable(${exec_name})
   target_sources(${exec_name} PUBLIC ${src} ${COMMON_SRCS})
-  target_compile_options(${exec_name} PRIVATE "-Wall" "-Werror" "-O2" "-std=c99")
+  target_compile_options(${exec_name} PRIVATE "-Wall" "-Werror" "-O2" "-std=gnu99")
 
   set(PRJ_LIB "${PROJECT_NAME}")
 
