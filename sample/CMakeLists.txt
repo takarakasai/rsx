@@ -14,6 +14,7 @@ set(SRCS
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_check_connection.c"
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_change_baudrate.c"
   "${PROJECT_SOURCE_DIR}/sample/src/oneshot_get_device_info.c"
+  "${PROJECT_SOURCE_DIR}/sample/src/measure_latency.c"
 )
 
 set(COMMON_SRCS
