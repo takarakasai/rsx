@@ -5,7 +5,11 @@
 /* for printf */
 #include <stdio.h>
 
-#include "rsx_type.h"
+#include "rsx/rsx_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define EVALUE(value, variable) \
   if ((value) == (variable)) {      \
@@ -35,6 +39,10 @@
       return eno;           \
     }                       \
   } while(0)
+
+#ifdef __cplusplus
+}  //  extern "C"
+#endif
 
 #endif
 

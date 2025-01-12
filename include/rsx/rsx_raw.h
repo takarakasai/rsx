@@ -5,8 +5,12 @@
 #include <stdio.h>
 // #endif
 
-#include "rsx_type.h"
-#include "rsx_err.h"
+#include "rsx/rsx_type.h"
+#include "rsx/rsx_err.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RSX_PKT_SIZE_HEADER (2)
 #define RSX_PKT_SIZE_ID (1)
@@ -154,5 +158,9 @@ static inline errno_t data_dump (uint8_t *data, size_t size) {
 
   return EOK;
 }
+
+#ifdef __cplusplus
+}  //  extern "C"
+#endif
 
 #endif  // RSX_RAW_H_

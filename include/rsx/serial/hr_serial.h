@@ -4,7 +4,11 @@
 
 #include <termios.h>
 
-#include "hr_unixio.h"
+#include "rsx/serial/hr_unixio.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
   int fd;
@@ -24,6 +28,10 @@ errno_t hr_serial_close (hr_serial *ser);
 
 errno_t hr_serial_write (hr_serial *ser, void* data, size_t size);
 errno_t hr_serial_read (hr_serial *ser, void* data, size_t size);
+
+#ifdef __cplusplus
+}  //  extern "C"
+#endif
 
 #endif
 

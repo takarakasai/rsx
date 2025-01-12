@@ -13,6 +13,10 @@
 #include <rsx/rsx_io.h>
 #include <rsx/rsx_raw.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   RSX_POS_CONTROL = 0x00,
   RSX_MIX_CONTROL = 0x01
@@ -132,21 +136,21 @@ errno_t rsx_bulk_write_word (  //
 errno_t rsx_oneshot_read_byte (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint8_t* data);
 errno_t rsx_oneshot_read_bytes (
-    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint8_t data[num]);
+    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint8_t data[/*num*/]);
 
 errno_t rsx_oneshot_read_word (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint16_t* data);
 errno_t rsx_oneshot_read_words (
-    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint16_t data[num]);
+    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint16_t data[/*num*/]);
 
 errno_t rsx_oneshot_sync_write_byte (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint8_t data);
 errno_t rsx_oneshot_sync_write_bytes (
-    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint8_t data[num]);
+    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint8_t data[/*num*/]);
 errno_t rsx_oneshot_sync_write_word (
     rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint16_t data);
 errno_t rsx_oneshot_sync_write_words (
-    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint16_t data[num]);
+    rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, size_t num, uint16_t data[/*num*/]);
 
 errno_t rsx_servo_set_control_mode(rsx* rsx, hr_serial* hrs, uint8_t id, rsx_control_mode_t mode);
 errno_t rsx_servo_on(rsx* rsx, hr_serial* hrs, uint8_t id);
@@ -190,5 +194,9 @@ errno_t rsx_get_baudrate(rsx* rsx, hr_serial* hrs, uint8_t id, int* baudrate);
 
 /* utility commands */
 errno_t rsx_search_servo(rsx* rsx, hr_serial* hrs, rsx_device_info* info);
+
+#ifdef __cplusplus
+}  //  extern "C"
+#endif
 
 #endif
