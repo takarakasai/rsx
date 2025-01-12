@@ -5,7 +5,7 @@
 /* for printf */
 #include <stdio.h>
 
-#include "rsx/rsx_type.h"
+#include <rsx/rsx_type.h>
 
 #ifdef __cplusplus
 extern "C" {

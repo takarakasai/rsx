@@ -5,8 +5,8 @@
 #include <stdio.h>
 // #endif
 
-#include "rsx/rsx_type.h"
-#include "rsx/rsx_err.h"
+#include <rsx/rsx_type.h>
+#include <rsx/rsx_err.h>
 
 #ifdef __cplusplus
 extern "C" {

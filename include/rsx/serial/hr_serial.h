@@ -4,7 +4,7 @@
 
 #include <termios.h>
 
-#include "rsx/serial/hr_unixio.h"
+#include <rsx/serial/hr_unixio.h>
 
 #ifdef __cplusplus
 extern "C" {

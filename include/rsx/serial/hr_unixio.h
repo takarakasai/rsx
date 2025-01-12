@@ -2,7 +2,7 @@
 #ifndef HR_UNIXIO_H
 #define HR_UNIXIO_H
 
-#include "rsx/rsx_type.h"
+#include <rsx/rsx_type.h>
 
 #ifdef __cplusplus
 extern "C" {
