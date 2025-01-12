@@ -2,6 +2,9 @@
 
 #include <stdlib.h>
 
+/* for wait_usec */
+#include "rsx/util/time.h"
+
 static const int kAvailableBaudrates[RSX_NUM_OF_BAUDRATES] = {
   9600,
   14400,
@@ -186,7 +189,7 @@ errno_t rsx_bulk_write_impl (rsx* rsx, hr_serial* hrs) {
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
   ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
 
-  // usleep(1000);
+  // rsx_wait_usec(1000);
 
   return EOK;
 }
@@ -199,7 +202,7 @@ errno_t rsx_oneshot_read_impl (
   errno_t eno  = -1;
   size_t count = 0;
   do {
-    usleep(100);
+    rsx_wait_usec(100);
     eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
     if (eno == EOK) {
       // ECALL(data_dump(rsx->rbuff, rsx->read_size));
@@ -273,7 +276,7 @@ errno_t rsx_oneshot_sync_write_impl (
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
   // ECALL(data_dump(rsx->wbuff, pkt_size));
   ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
-  usleep(100 * 1000);
+  rsx_wait_usec(100 * 1000);
 
   ECALL(rsx_spkt_conv_read_cmd(&(rsx->pkt)));
   ECALL(rsx_pkt_ser(&(rsx->pkt), rsx->wbuff, rsx->max_frame_size, &pkt_size));
@@ -286,7 +289,7 @@ errno_t rsx_oneshot_sync_write_impl (
     errno_t eno = 0;
     // ECALL(data_dump(rsx->wbuff, pkt_size));
     ECALL(hr_serial_write(hrs, rsx->wbuff, pkt_size));
-    usleep(100 * 1000);
+    rsx_wait_usec(100 * 1000);
 
     eno = hr_serial_read(hrs, rsx->rbuff, rsx->read_size);
     if (eno == EOK) {

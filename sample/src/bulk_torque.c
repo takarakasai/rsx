@@ -1,9 +1,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 #include <stdbool.h>
 
 // #define DATA_DUMP
@@ -27,7 +24,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
   rsx_config.max_payload_size = 32;
   ECALL(rsx_init(&rsx, &rsx_config));
 
-  usleep(200*1000);
+  rsx_wait_usec(200*1000);
 
   for (size_t i = 0; i < sizeof(ids)/sizeof(ids[0]); i++) {
     ECALL(rsx_servo_set_control_mode(&rsx, hrs, ids[i], RSX_MIX_CONTROL));
@@ -41,13 +38,13 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
     rsx_set_goal_torques(&rsx, hrs, ids, goals[0], 2);
     for (size_t i = 0; i < 5; i++) {
       ECALL(get_current_status_all(&rsx, hrs, ids, 2));
-      usleep(100 * 1000);
+      rsx_wait_usec(100 * 1000);
     }
 
     rsx_set_goal_torques(&rsx, hrs, ids, goals[1], 2);
     for (size_t i = 0; i < 5; i++) {
       ECALL(get_current_status_all(&rsx, hrs, ids, 2));
-      usleep(100 * 1000);
+      rsx_wait_usec(100 * 1000);
     }
   } while(count++ < 5);
 

@@ -1,9 +1,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 #include <stdbool.h>
 
 // #define DATA_DUMP
@@ -22,7 +19,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
   rsx_config.max_payload_size = 32;
   ECALL(rsx_init(&rsx, &rsx_config));
 
-  usleep(200*1000);
+  rsx_wait_usec(200*1000);
 
   for (int i = 0; i < sizeof(ids)/sizeof(ids[0]); i++) {
     printf("----------- ROM --------------\n");

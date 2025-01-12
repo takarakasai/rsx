@@ -1,9 +1,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 #include <stdbool.h>
 
 // #define DATA_DUMP
@@ -22,7 +19,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
   size_t count = 0;
   do {
     ECALL(get_current_status_all(&rsx, hrs, ids, 2));
-    usleep(100 * 1000);
+    rsx_wait_usec(100 * 1000);
   } while(count++ < 100);
 
   return 0;

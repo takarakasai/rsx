@@ -1,9 +1,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 // #define DATA_DUMP
 #include "rsx.h"
 

@@ -10,11 +10,11 @@
 
 #include <stdbool.h>
 
-/* for usleep */
-#include <unistd.h>
-
 #include "rsx/rsx_err.h"
 #include "rsx/rsx_common.h"
+
+/* for wait_usec */
+#include "rsx/util/time.h"
 
 static errno_t setraw(struct termios *term) {
   EVALUE(NULL, term);
@@ -266,7 +266,7 @@ errno_t hr_serial_read (hr_serial *ser, void* data, size_t size) {
 
     if (siz == 0) {
       zcount++;
-      // usleep(100);
+      // rsx_wait_usec(100);
       if (zcount > 0) {
         return ETIMEDOUT;
       }
@@ -289,7 +289,7 @@ errno_t hr_serial_write (hr_serial *ser, void* data, size_t size) {
   }
 
 #if defined(HR_SERIAL_AUTO_READ_ECHO_DATA)
-  usleep(50);
+  rsx_wait_usec(50);
   uint8_t echo;
   size_t read_size;
   ECALL(_read(ser->fd, &echo, 1, &read_size));

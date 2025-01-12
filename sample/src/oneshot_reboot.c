@@ -1,9 +1,6 @@
 /* for printf */
 #include <stdio.h>
 
-/* for usleep */
-#include <unistd.h>
-
 #include <stdbool.h>
 
 #include "rsx/rsx.h"
