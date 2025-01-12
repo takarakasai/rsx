@@ -77,7 +77,7 @@ errno_t rsx_config_init(  //
   EVALUE(NULL, config);
 
   config->num_of_servos    = 8;
-  config->max_payload_size = 6;
+  config->max_payload_size = 32;
 
   return EOK;
 }
@@ -98,7 +98,6 @@ errno_t rsx_init(  //
     rsx* rsx,      //
     rsx_config* config) {
   EVALUE(NULL, rsx);
-  EVALUE(NULL, config);
 
   rsx->write_size = 0;
   rsx->read_size = 0;
@@ -109,7 +108,9 @@ errno_t rsx_init(  //
   rsx->payload = NULL;
   rsx->pkt.data = NULL;
 
-  ECALL(rsx_config_copy(config, &rsx->config));
+  if (config) {
+    ECALL(rsx_config_copy(config, &rsx->config));
+  }
 
   // <------------ max_frame_size ----------------------->
   // | HEADER | ID | FLG | ADR | LEN | CNT | data | SUM |
