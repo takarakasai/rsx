@@ -17,10 +17,7 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
   uint8_t ids[] = {0x01, 0x02};
 
   rsx rsx;
-  rsx_config rsx_config;
-  ECALL(rsx_config_init(&rsx_config));
-  rsx_config.max_payload_size = 32;
-  ECALL(rsx_init(&rsx, &rsx_config));
+  ECALL(rsx_init(&rsx, NULL));
 
   size_t count = 0;
   do {
@@ -34,12 +31,16 @@ int run_app(int argc, char *argv[], hr_serial *hrs) {
 int main(int argc, char *argv[]) {
   hr_serial hrs;
   ECALL(hr_serial_init(&hrs));
+  ECALL(hr_serial_set_baudrate(&hrs, 230400));
 
+  char* dev  = "ttyUSB";
+  char* unit = "0";
   if (argc >= 3) {
-    ECALL(hr_serial_open(&hrs, argv[1], argv[2]));
-  } else {
-    ECALL(hr_serial_open(&hrs, "ttyUSB", "1"));
+    dev  = argv[1];
+    unit = argv[2];
   }
+  printf("open %s %s\n", dev, unit);
+  ECALL(hr_serial_open(&hrs, dev, unit));
 
   run_app(argc, argv, &hrs);
 
