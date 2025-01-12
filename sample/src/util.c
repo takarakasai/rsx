@@ -36,8 +36,6 @@ errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t n
     retry_count[i] = rsx_get_retry_count(rsx);
   }
 
-  // printf("\033[5B");
-
   printf("ID(err,retry):");
   for (size_t i = 0; i < num; i++) {
     printf(" %02x(%4d,%3ld)", id[i], eno[i], retry_count[i]);
@@ -81,14 +79,14 @@ errno_t get_current_status (rsx* rsx, hr_serial* hrs, uint8_t id) {
 
   uint16_t data[4];
   errno_t eno = rsx_oneshot_read_words(rsx, hrs, id, 0x2A, sizeof(data)/sizeof(data[0]), data);
+  ssize_t retry_count = rsx_get_retry_count(rsx);
   if (eno == EOK) {
-    // printf("\033[5B"
-    printf("ID: %02x, Count : %d\n", id, read_count++);
+    printf("ID(err,retry): %02x(%4d,%3ld), Count : %d\n", id, eno, retry_count, read_count++);
     printf("Current Pos  :%+7.2lf (0x%04x) [deg]\n", (int16_t)(data[0]) / 10.0f, data[0]);
     printf("Current Time :%+7d (0x%04x) [msec]\n", data[1] * 10, data[1]);
     printf("Current Vel  :%+7d (0x%04x) [rpm]\n", (int16_t)(data[2]), data[2]);
     printf("Current Trq  :%+7.3lf (0x%04x) [%%]\n", data[3] * 0.1, data[3]);
-    // printf("\033[5A");
+    printf("\033[5A");
   } else {
     printf("Get status error\n");
   }
