@@ -41,8 +41,13 @@ errno_t _read (int fd, void* data, size_t size, size_t *read_size) {
   EVALUE(0, fd);
   EVALUE(NULL, data);
 
-  *read_size = read(fd, data, size);
+  int res = read(fd, data, size);
 
+  if (res == -1) {
+    return errno;
+  }
+
+  *read_size = res;
   return EOK;
 }
 

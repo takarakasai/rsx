@@ -4,12 +4,12 @@ project(rsx)
 
 option(ENABLE_SAMPLE "enable to build sample app" ON)
 
-option(HR_SERIAL_AUTO_READ_ECHO_DATA "" ON)
+option(HR_SERIAL_AUTO_READ_ECHO_DATA "" OFF)
 if(${HR_SERIAL_AUTO_READ_ECHO_DATA})
     add_definitions(-DHR_SERIAL_AUTO_READ_ECHO_DATA)
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/h/${PROJECT_NAME})
+include_directories(${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME})
 
 file(GLOB SRCS "src/*.c")
 file(GLOB SERIAL_SRCS "src/serial/*.c")

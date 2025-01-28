@@ -1,44 +1,43 @@
-
-#ifndef RSX_H
-#define RSX_H
+#ifndef RSX_RAW_H_
+#define RSX_RAW_H_
 
 #if defined(DATA_DUMP)
 #include <stdio.h>
 #endif
 
 #include "rsx_type.h"
+#include "rsx_err.h"
 
-#define EVALUE(value, variable) \
-  if ((value) == (variable)) {      \
-    return EINVAL;              \
-  }
+#define RSX_PKT_SIZE_HEADER (2)
+#define RSX_PKT_SIZE_ID (1)
+#define RSX_PKT_SIZE_FLG (1)
+#define RSX_PKT_SIZE_ADR (1)
+#define RSX_PKT_SIZE_LEN (1)
+#define RSX_PKT_SIZE_CNT (1)
+#define RSX_PKT_SIZE_SUM (1)
+#define RSX_PKT_SIZE_MIN (  \
+    RSX_PKT_SIZE_HEADER +   \
+    RSX_PKT_SIZE_ID  +      \
+    RSX_PKT_SIZE_FLG +      \
+    RSX_PKT_SIZE_ADR +      \
+    RSX_PKT_SIZE_LEN +      \
+    RSX_PKT_SIZE_CNT +      \
+    RSX_PKT_SIZE_SUM)
 
-#define ELTGT(lvalue, hvalue, variable)              \
-  if ((variable < lvalue) || (hvalue < variable)) {  \
-    printf("%d %d %d\n", (int)lvalue, (int)hvalue, (int)variable);  \
-    return EINVAL;                                   \
-  }
-
-#define ELTGE(lvalue, hvalue, variable)              \
-  if ((variable < lvalue) || (hvalue <= variable)) { \
-    return EINVAL;                                   \
-  }
-
-#define ELEGT(lvalue, hvalue, variable)              \
-  if ((variable <= lvalue) || (hvalue < variable)) { \
-    return EINVAL;                                   \
-  }
-
-#define EOK 0
-
-#define ECALL(function)     \
-  do {                      \
-    errno_t eno = function; \
-    if (eno != EOK) {        \
-      return eno;           \
-    }                       \
-  } while(0)
-
+#define RSX_FLAG_RESERVE         (0x80)
+#define RSX_FLAG_WRITE_ROM       (0x40)
+#define RSX_FLAG_REBOOT_SERVO    (0x20)
+#define RSX_FLAG_FACTORY_PRESET  (0x10)
+#define RSX_FLAG_RETURN_PKT_MASK (0x0F)
+#define RSX_FLAG_REPLY_DISABLE   (0x00)
+#define RSX_FLAG_REPLY_ENABLE    (0x01)
+#define RSX_FLAG_RETURN_00TO29   (0x03)
+#define RSX_FLAG_RETURN_30TO59   (0x05)
+#define RSX_FLAG_RETURN_20TO29   (0x07)
+#define RSX_FLAG_RETURN_42TO59   (0x09)
+#define RSX_FLAG_RETURN_30TO41   (0x0B)
+#define RSX_FLAG_RETURN_60TO127  (0x0D)
+#define RSX_FLAG_RETURN_USER     (0x0F)
 
 /*
  * @length  max length of data payload
@@ -96,6 +95,7 @@
 #define RSX_SPKT_SETFLAG(pkt, val)      do{(pkt).flag    = val;}while(0)
 #define RSX_SPKT_SETADDR(pkt, val)      do{(pkt).address = val;}while(0)
 #define RSX_SPKT_SETLENGTH(pkt, val)    do{(pkt).length  = val;}while(0)
+#define RSX_SPKT_SETCOUNT(pkt, val)     do{(pkt).count   = val;}while(0)
 #define RSX_SPKT_GETLENGTH(pkt)         RSX_PKT_GETLENGTH(pkt)
 #define RSX_SPKT_GETCOUNT(pkt)          RSX_PKT_GETCOUNT(pkt)
 #define RSX_SPKT_SET_U8(pkt, idx, data) RSX_PKT_SET_U8(pkt, 0, idx, data)
@@ -127,11 +127,13 @@ typedef struct {
   uint8_t  check_sum; // TODO:
 } rsx_pkt; // RS301/302 Short packet
 
-errno_t rsx_pkt_get_size (rsx_pkt *pkt, size_t *size);
+errno_t rsx_pkt_get_size (const rsx_pkt *pkt, size_t *size);
 errno_t rsx_pkt_init (rsx_pkt *pkt, uint8_t length, uint8_t count, uint8_t *data);
 errno_t rsx_lpkt_init (rsx_pkt *pkt);
 errno_t rsx_spkt_init (rsx_pkt *pkt, uint8_t id, uint8_t flag);
+errno_t rsx_spkt_conv_read_cmd (rsx_pkt *pkt);
 errno_t rsx_pkt_deser (rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num, size_t *size);
+errno_t rsx_pkt_deser_and_check (const rsx_pkt *pkt, uint8_t src[/*max_num*/], size_t max_num);
 errno_t rsx_pkt_ser (rsx_pkt *pkt, uint8_t dst[/*max_num*/], size_t max_num, size_t *size);
 
 static inline errno_t data_dump (uint8_t *data, size_t size) {
@@ -148,5 +150,4 @@ static inline errno_t data_dump (uint8_t *data, size_t size) {
   return EOK;
 }
 
-#endif
-
+#endif  // RSX_RAW_H_

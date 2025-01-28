@@ -1,0 +1,129 @@
+#include "util.h"
+
+errno_t get_current_status_all (rsx* rsx, hr_serial* hrs, uint8_t* id, uint8_t num) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, hrs);
+
+  static int read_count = 0;
+
+  uint16_t data[num][4];
+  for (size_t i = 0; i < num; i++) {
+    ECALL(rsx_oneshot_read_words(rsx, hrs, id[i], 0x2A,
+          sizeof(data[i])/sizeof(data[i][0]), data[i]));
+  }
+
+  // printf("\033[5B");
+
+  printf("ID:");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %02x", id[i]);
+  }
+  printf("Count : %d\n", read_count++);
+
+  printf("Current Pos  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7.2lf (0x%04x)", (int16_t)(data[i][0]) / 10.0f, data[i][0]);
+  }
+  printf(" [deg]\n");
+
+  printf("Current Time :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7d (0x%04x)", data[i][1] * 10, data[i][1]);
+  }
+  printf(" [msec]\n");
+
+  printf("Current Vel  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7d (0x%04x)", (int16_t)(data[i][2]), data[i][2]);
+  }
+  printf(" [rpm]\n");
+
+  printf("Current Trq  :");
+  for (size_t i = 0; i < num; i++) {
+    printf(" %+7.2lf (0x%04x)", data[i][3] * 0.1, data[i][3]);
+  }
+  printf(" [%%]\n");
+
+  printf("\033[5A");
+
+  return EOK;
+}
+
+errno_t get_current_status (rsx* rsx, hr_serial* hrs, uint8_t id) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, hrs);
+
+  static int read_count = 0;
+
+  uint16_t data[4];
+  ECALL(rsx_oneshot_read_words(rsx, hrs, id, 0x2A, sizeof(data)/sizeof(data[0]), data));
+  // printf("\033[5B");
+  printf("ID: %02x, Count : %d\n", id, read_count++);
+  printf("Current Pos  :%+7.2lf (0x%04x) [deg]\n", (int16_t)(data[0]) / 10.0f, data[0]);
+  printf("Current Time :%+7d (0x%04x) [msec]\n", data[1] * 10, data[1]);
+  printf("Current Vel  :%+7d (0x%04x) [rpm]\n", (int16_t)(data[2]), data[2]);
+  printf("Current Trq  :%+7.3lf (0x%04x) [%%]\n", data[3] * 0.1, data[3]);
+  printf("\033[5A");
+
+  return EOK;
+}
+
+int GetDeviceInfo(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  EVALUE(NULL, rsx);
+  EVALUE(NULL, hrs);
+
+  uint8_t data[3];
+  ECALL(rsx_oneshot_read_bytes(rsx, hrs, id, 0x00, sizeof(data)/sizeof(data[0]), data));
+
+  printf("Model Number         : L:%02x H:%02x\n", data[0], data[1]);
+  printf("Firmware Version     : %02x\n", data[2]);
+
+  ECALL(rsx_oneshot_read_bytes(rsx, hrs, id, 0x04, sizeof(data)/sizeof(data[0]), data));
+  printf("ServoID              : %02x\n", data[0]);
+  printf("Reverse              : %02x\n", data[1]);
+  printf("BaudRate             : %02x\n", data[2]);
+
+  ECALL(rsx_oneshot_read_bytes(rsx, hrs, id, 0x15, sizeof(data)/sizeof(data[0]), data));
+  printf("Veloc/Torque Enabled : %02x\n", data[0]);
+  printf("Torque in Silence    : %02x\n", data[1]);
+  printf("Wake-up Time         : %02x\n", data[2]);
+
+  return 0;
+}
+
+int GetMemInfo(rsx* rsx, hr_serial* hrs, uint8_t id, uint8_t addr, uint8_t size) {
+  uint8_t data[size];
+  ECALL(rsx_oneshot_read_bytes(rsx, hrs, id, addr, size, data));
+
+  printf("   ");
+  for (uint16_t i = 0; i < 0x10; i++) {
+    printf(" %02x", i + addr);
+  }
+  printf("\n");
+  for (uint16_t i = 0; i < 0x10; i++) {
+    printf("---");
+  }
+  printf("\n");
+  for (uint16_t i = 0; i < size; i++) {
+    if (i % 0x10 == 0) {
+      if (i != 0) {
+        printf("\n");
+      }
+      printf("%02x|", i + addr);
+    }
+    printf(" %02x", data[i]);
+  }
+  printf("\n");
+
+  return 0;
+}
+
+int GetROMInfo(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  /* ROM: 0x00 - 0x1D (30[B]) */
+  return GetMemInfo(rsx, hrs, id, 0x00, 30);
+}
+
+int GetRAMInfo(rsx* rsx, hr_serial* hrs, uint8_t id) {
+  /* ROM: 0x1E - 0x3B (30[B]) */
+  return GetMemInfo(rsx, hrs, id, 0x1E, 30);
+}
